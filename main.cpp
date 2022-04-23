@@ -111,7 +111,7 @@ int main(void){
 
 }
 
-int Data;
+int Data; //test
 void SysTick_Handler(void){ // every sample
     //*** students write this ******
 // toggle heartbeat LED (change from 0 to 1, or from 1 to 0)
