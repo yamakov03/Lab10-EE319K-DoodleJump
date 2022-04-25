@@ -16,27 +16,26 @@
 // measures from PD2, analog channel 5
 void ADC_Init(void){ volatile uint32_t delay;
   
-  // you write this
-  SYSCTL_RCGCGPIO_R |= 0x8;      // 1) activate clock for Port D
-  while((SYSCTL_PRGPIO_R&0x8) == 0){};
-  GPIO_PORTD_DIR_R &= ~0x4;      // 2) make PD2 input
-  GPIO_PORTD_AFSEL_R |= 0x4;     // 3) enable alternate fun on PD2
-  GPIO_PORTD_DEN_R &= ~0x4;      // 4) disable digital I/O on PD2
-  GPIO_PORTD_AMSEL_R |= 0x4;     // 5) enable analog fun on PD2
-  SYSCTL_RCGCADC_R |= 0x01;       // 6) activate ADC0 
-  delay = SYSCTL_RCGCADC_R;       // extra time to stabilize
-  delay = SYSCTL_RCGCADC_R;       // extra time to stabilize
-  delay = SYSCTL_RCGCADC_R;       // extra time to stabilize
-  delay = SYSCTL_RCGCADC_R;
-  ADC0_PC_R = 0x01;               // 7) configure for 125K 
-  ADC0_SSPRI_R = 0x0123;          // 8) Seq 3 is highest priority
-  ADC0_ACTSS_R &= ~0x0008;        // 9) disable sample sequencer 3
-  ADC0_EMUX_R &= ~0xF000;         // 10) seq3 is software trigger
-  ADC0_SSMUX3_R = (ADC0_SSMUX3_R&0xFFFFFFF0)+5;  // 11) Ain5 (PD2)
-  ADC0_SSCTL3_R = 0x0006;         // 12) no TS0 D0, yes IE0 END0
-  ADC0_IM_R &= ~0x0008;           // 13) disable SS3 interrupts
-	//ADC0_SAC_R |= 0x4;
-  ADC0_ACTSS_R |= 0x0008;         // 14) enable sample sequencer 3
+	SYSCTL_RCGCADC_R |= 0x0001;   // 1) activate ADC0
+  SYSCTL_RCGCGPIO_R |= 0x08;    // 2) activate clock for Port D
+  while((SYSCTL_PRGPIO_R&0x08) != 0x08){};  // 3 for stabilization
+  GPIO_PORTD_DIR_R &= ~0x04;    // 4) make PD2 input
+  GPIO_PORTD_AFSEL_R |= 0x04;   // 5) enable alternate function on PD2
+  GPIO_PORTD_DEN_R &= ~0x04;    // 6) disable digital I/O on PD2
+  GPIO_PORTD_AMSEL_R |= 0x04;   // 7) enable analog functionality on PD2
+// while((SYSCTL_PRADC_R&0x0001) != 0x0001){}; // good code, but not implemented in simulator
+  ADC0_PC_R &= ~0xF;
+  ADC0_PC_R |= 0x1;             // 8) configure for 125K samples/sec
+  ADC0_SSPRI_R = 0x0123;        // 9) Sequencer 3 is highest priority
+  ADC0_ACTSS_R &= ~0x0008;      // 10) disable sample sequencer 3
+  ADC0_EMUX_R &= ~0xF000;       // 11) seq3 is software trigger
+  ADC0_SSMUX3_R &= ~0x000F;
+  ADC0_SSMUX3_R += 5;           // 12) set channel (5)
+  ADC0_SSCTL3_R = 0x0006;       // 13) no TS0 D0, yes IE0 END0
+  ADC0_IM_R &= ~0x0008;         // 14) disable SS3 interrupts
+  ADC0_ACTSS_R |= 0x0008;       // 15) enable sample sequencer 3
+		
+	//ADC0_SAC_R |= 0x06;
 }
 
 //------------ADCIn------------
@@ -63,9 +62,9 @@ SlidePot::SlidePot(uint32_t m, uint32_t b){
 }
 
 void SlidePot::Save(uint32_t n){
-	distance = (120*n)/4095;
-// 3) set semaphore flag = 1
-	flag = 1;
+	this->data = n;
+	this->distance = (this->slope*this->data+this->offset)/4096;
+	this->flag = 1;
 
 }
 uint32_t SlidePot::Convert(uint32_t n){
@@ -76,10 +75,8 @@ uint32_t SlidePot::Convert(uint32_t n){
 
 void SlidePot::Sync(void){
   // you write this
-	while(flag == 0){
-	}
-// 2) set semaphore flag to 0
-		flag = 0;
+	while(this->flag == 0) {};
+	this->flag = 0;
 }
 
 uint32_t SlidePot::ADCsample(void){ // return ADC sample value (0 to 4095)

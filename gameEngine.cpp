@@ -11,6 +11,7 @@
 #include "Timer0.h"
 #include "Timer1.h"
 #include "TExaS.h"
+#include "gameengine.h"
 
 // Initialize Port F so PF1, PF2 and PF3 are heartbeats
 void PortF_Init(void){

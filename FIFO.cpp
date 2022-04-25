@@ -34,10 +34,8 @@
 Queue::Queue(){
   // Constructor - make FIFO initially empty
   // write this
-//	this->GetI = &(this->Buf[31]);
-//	this->PutI = &(this->Buf[31]);
-	PutI = 31;
-	GetI = 31;
+	PutI = 0;
+	GetI = 0;
 
 }
 
@@ -60,22 +58,22 @@ bool Queue::IsFull(void){
   // Inserts an element in queue at rear end
 bool Queue::Put(char x){
 	if ( ((PutI+1)%FIFOSIZE) == GetI) {
-          return(0);
-   }
-   Buf[PutI] = x;
-   PutI = (PutI+1)%FIFOSIZE;
-   return(1);
+		return(0);
+	}
+	Buf[PutI] = x;
+	PutI = (PutI+1)%FIFOSIZE;
+	return(1);
 }
 
 
   // Removes an element in Queue from front end. 
 bool Queue::Get(char *pt){
 	if (GetI == PutI) {
-          return(0);
-   }
-   *pt = Buf[GetI];
-   GetI = (GetI+1)%FIFOSIZE;
-   return(1);
+		return(0);
+	}
+	*pt = Buf[GetI];
+	GetI = (GetI+1)%FIFOSIZE;
+	return(1);
 
 }
 

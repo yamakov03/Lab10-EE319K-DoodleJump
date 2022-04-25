@@ -249,6 +249,7 @@ Queue RxFifo; // static implementation of class
 // Baud rate is 115200 bits/sec
 // Lab 9
 void UART_Init(void){
+	//319H BAUD RATE!!
 	SYSCTL_RCGCUART_R |= 0x02;            // activate UART1
   SYSCTL_RCGCGPIO_R |= 0x04;
 	while( ((SYSCTL_RCGCGPIO_R&0x04) == 0) ) {}
@@ -275,29 +276,6 @@ void UART_Init(void){
                                         // UART0=priority 2
   NVIC_PRI1_R = (NVIC_PRI1_R&0xFF00FFFF)|0x00400000; // bits 21-23
   NVIC_EN0_R = 1<<6;           // enable interrupt 5 in NVIC
-
-
-//		SYSCTL_RCGCUART_R |= 0x00000002;  // activate UART1
-//		SYSCTL_RCGCGPIO_R |= 0x00000004;  // activate port C
-//		UART1_CTL_R &= ~0x00000001;    // disable UART
-//		UART1_IBRD_R = 43;     // IBRD = int(80,000,000/(16115,200)) = int(43.40278)
-//		UART1_FBRD_R = 26;     // FBRD = round(0.40278 64) = 26
-//		UART1_LCRH_R = 0x00000070;  // 8 bit, no parity bits, one stop, FIFOs
-//		UART1_CTL_R |= 0x00000001;     // enable UART
-//		GPIO_PORTC_AFSEL_R |= 0x30;    // enable alt funct on PC5-4
-//		GPIO_PORTC_DEN_R |= 0x30;      // configure PC5-4 as UART1
-//		GPIO_PORTC_PCTL_R = (GPIO_PORTC_PCTL_R&0xFF00FFFF)+0x0020000;
-//		GPIO_PORTC_AMSEL_R &= ~0x30;   // disable analog on PC5-4
-//		UART1_IFLS_R |= 0x10;                // clear TX and RX interrupt FIFO level fields
-//																					// configure interrupt for TX FIFO <= 1/8 full
-//																					// configure interrupt for RX FIFO >= 1/8 full
-//		UART1_IFLS_R += (UART_IFLS_RX1_8);
-//																					// enable TX and RX FIFO interrupts and RX time-out interrupt
-//		UART1_IM_R |= (UART_IM_RXIM|UART_IM_TXIM|UART_IM_RTIM);
-//		UART1_CTL_R |= 0x301;                 // enable UART
-//																					// UART0=priority 2
-//		NVIC_PRI1_R = (NVIC_PRI1_R&0xFF00FFFF)|0x00400000; // bits 21-23
-//		NVIC_EN0_R = 0x40;           // enable interrupt 6 in NVIC
 }
 
 
@@ -305,18 +283,11 @@ void UART_Init(void){
 // spin if RxFifo is empty
 // Lab 9
 char UART_InChar(void){
-//	while((UART1_FR_R&0x0010) != 0) {}       // wait until RXFE is 0
-//	return((char)(UART1_DR_R&0xFF));
+
 	char msg;
 	while(RxFifo.Get(&msg) == false) {}
 	return msg;
 	
-//	char* ch;
-//	//while(RxFifo.IsEmpty()) {};
-//	while((UART1_FR_R&0x0010) != 0) {};
-//	if(RxFifo.Get(ch)) {
-//		return *ch;
-//	}
 }
 // Lab 9
 bool UART_InStatus(void){
@@ -342,7 +313,6 @@ int RxCounter = 0;
 void UART1_Handler(void){
   PF1  ^= 0x02; // triple toggle debugging
   PF1  ^= 0x02;
- // write this
 	char data;
 	while((UART1_FR_R&0x0010) == 0) { //if there is data in uart reveiver
 		data = UART1_DR_R&0xFF;

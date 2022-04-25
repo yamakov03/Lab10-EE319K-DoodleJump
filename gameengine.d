@@ -12,3 +12,4 @@
 .\gameengine.o: Timer0.h
 .\gameengine.o: Timer1.h
 .\gameengine.o: TExaS.h
+.\gameengine.o: gameengine.h
