@@ -29,22 +29,46 @@ void SysTick_Init(uint32_t period){
 }
 
 // Creating a struct for the Sprite.
-typedef enum {dead,alive} status_t;
+typedef enum {dead, alive, dying} status_t;
 
 //-------------------------------doodler--------------------------
 struct sprite{
-  int x;      // x coordinate
-  int y;      // y coordinate
-  const unsigned short *image; // ptr->image
-  status_t life;            // dead/alive
+  int32_t x;      // x coordinate
+  int32_t y;      // y coordinate
+	const uint16_t *image; // ptr->image
+	int32_t w,h;
+	int32_t vx;			// x velocity
+	int32_t vy;			// y velocity
+  status_t life;         // dead/alive
 };        
 
 typedef struct sprite sprite_t;
 
+sprite_t doodler;
+void Init(void){ int i;
+	doodler.x = 50;
+	doodler.y = 50;
+	doodler.image = doodlersprite;
+	doodler.w = 23;
+	doodler.h = 22;
+	doodler.vx = 0; //(Random()%5)-2;	// -2 to 2
+	doodler.vy = 2; //(Random()%3);	// 0 to 2
+	doodler.life = alive;
+}
+
+void Move(void) {
+	
+}
+
+void Draw(void) {
+	//if(doodler.life == alive) {
+		ST7735_DrawBitmap((Random()%100), (Random()%100), doodlersprite, doodler.w,doodler.h);
+	//}
+}
 
 int position;
 
-sprite_t doodler={60, 100, doodlersprite, alive};
+
 
 uint32_t time = 0;
 uint32_t score = 0;
@@ -79,27 +103,21 @@ int main(void){
   Timer0_Init(&background,800000); // 50 Hz
   Timer1_Init(&clock,80000000); // 1 Hz
 	SysTick_Init(4000000);
-	
+	Init();
 	PortF_Init();
 	PortE_Init();
 	PortB_Init();
   EnableInterrupts();
 	
 	//ST7735_PlotClear(160,160);
-  ST7735_DrawBitmap(52, 100, doodlersprite, 23,22); // player ship middle bottom
+  //ST7735_DrawBitmap(52, 100, doodlersprite, 23,22); // player ship middle bottom
 	
-//  while(doodler.life == alive){
-////    while(flag== 1){
-////			ST7735_DrawBitmap(doodler.x,doodler.y,doodler.image,16, 10);
-////		  flag = 0;
-////		};
+  while(doodler.life == alive){
+		ST7735_FillScreen(0x0000); 
+		Draw();
+	}
 
-//    //ST7735_DrawBitmap(bill.x,bill.y,bill.image,16,10);
-//		
-//		
-//  }
-
-  ST7735_FillScreen(0xFFFF);            // set screen to black
+  ST7735_FillScreen(0x0000);            // set screen to black
   ST7735_SetCursor(1, 1);
   ST7735_OutString((char*)"GAME OVER");
   ST7735_SetCursor(1, 2);
