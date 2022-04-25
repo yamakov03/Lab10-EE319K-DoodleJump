@@ -5,7 +5,7 @@
 <h2>Tool Versions:</h2>
 IDE-Version: µVision V5.36.0.0
 Copyright (C) 2021 ARM Ltd and ARM Germany GmbH. All rights reserved.
-License Information: Alex Zhang Zhang, University of Texas at Austin, LIC=----
+License Information: Daniel Yamakov, UT Austin, LIC=----
  
 Tool Versions:
 Toolchain:       MDK-Lite  Version: 5.36.0.0
@@ -22,15 +22,46 @@ Dialog DLL:      TCM.DLL V1.53.0.0
  
 <h2>Project:</h2>
 C:\Keil_v5\EE319KwareSpring2022\Lab10-EE319K-DoodleJump\Lab10_C++.uvprojx
-Project File Date:  04/24/2022
+Project File Date:  04/23/2022
 
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 7 (build 960)', folder: 'C:\Keil_v5\ARM\ARMCC\Bin'
-Build target 'Lab 10'
+Rebuild target 'Lab 10'
+assembling startup_TM4C123.s...
+compiling DAC.cpp...
 compiling main.cpp...
+compiling random.cpp...
+compiling PLL.cpp...
+compiling Sound.cpp...
+Sound.cpp(11): warning:  #177-D: variable "shoot"  was declared but never referenced
+  const uint8_t shoot[4080] = {
+Sound.cpp(217): warning:  #177-D: variable "invaderkilled"  was declared but never referenced
+  const uint8_t invaderkilled[3377] = {
+Sound.cpp(388): warning:  #177-D: variable "explosion"  was declared but never referenced
+  const uint8_t explosion[2000] = {
+Sound.cpp(828): warning:  #177-D: variable "fastinvader1"  was declared but never referenced
+  const uint8_t fastinvader1[982] = {
+Sound.cpp(880): warning:  #177-D: variable "fastinvader2"  was declared but never referenced
+  const uint8_t fastinvader2[1042] = {
+Sound.cpp(935): warning:  #177-D: variable "fastinvader3"  was declared but never referenced
+  const uint8_t fastinvader3[1054] = {
+Sound.cpp(990): warning:  #177-D: variable "fastinvader4"  was declared but never referenced
+  const uint8_t fastinvader4[1098] = {
+Sound.cpp(1047): warning:  #177-D: variable "highpitch"  was declared but never referenced
+  const uint8_t highpitch[1802] = {
+Sound.cpp: 8 warnings, 0 errors
+compiling SlidePot.cpp...
+compiling ST7735.cpp...
+compiling Timer0.cpp...
+compiling FIFO.cpp...
+compiling Timer1.cpp...
+assembling print.s...
+compiling UART.cpp...
+compiling TExaS.cpp...
+compiling gameEngine.cpp...
 linking...
-Program Size: Code=7800 RO-data=3788 RW-data=100 ZI-data=2220  
-".\Lab10_C++.axf" - 0 Error(s), 0 Warning(s).
+Program Size: Code=7816 RO-data=3788 RW-data=100 ZI-data=2220  
+".\Lab10_C++.axf" - 0 Error(s), 8 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -47,8 +78,8 @@ Package Vendor: Keil
 
 <h2>Collection of Component include folders:</h2>
   .\RTE\_Lab_10
-  C:\Users\alexj\AppData\Local\Arm\Packs\ARM\CMSIS\5.8.0\CMSIS\Core\Include
-  C:\Users\alexj\AppData\Local\Arm\Packs\Keil\TM4C_DFP\1.1.0\Device\Include\TM4C123
+  C:\Users\dyamakov\AppData\Local\Arm\Packs\ARM\CMSIS\5.8.0\CMSIS\Core\Include
+  C:\Users\dyamakov\AppData\Local\Arm\Packs\Keil\TM4C_DFP\1.1.0\Device\Include\TM4C123
 
 <h2>Collection of Component Files used:</h2>
 
