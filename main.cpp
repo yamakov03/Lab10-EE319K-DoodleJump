@@ -1,6 +1,3 @@
-// hello this is a test
-
-
 #include <stdint.h>
 #include <stdio.h>
 #include "../inc/tm4c123gh6pm.h"
@@ -37,26 +34,32 @@ typedef enum {dead,alive} status_t;
 
 //-------------------------------doodler--------------------------
 struct sprite{
-  uint32_t x;      // x coordinate
-  uint32_t y;      // y coordinate
+  int x;      // x coordinate
+  int y;      // y coordinate
   const unsigned short *image; // ptr->image
   status_t life;            // dead/alive
-};          
+};        
+
 typedef struct sprite sprite_t;
+
+
 int position;
 
-sprite_t bill={60,9,SmallEnemy20pointB,alive};
-sprite_t doodler={60, 100, PlayerShip0, alive};
+sprite_t doodler={60, 100, doodlersprite, alive};
 
 uint32_t time = 0;
 uint32_t score = 0;
+
+
 volatile uint32_t flag;
 
 void background(void){
   flag = 1; // semaphore
+	
   if(doodler.life == alive){
     doodler.x = position;
   }
+	
   if(doodler.y>155){
     doodler.life = dead;
   }
@@ -83,14 +86,14 @@ int main(void){
 	PortB_Init();
   EnableInterrupts();
 	
-	
-  ST7735_DrawBitmap(52, 159, PlayerShip0, 18,8); // player ship middle bottom
+	ST7735_PlotClear(160,160);
+  ST7735_DrawBitmap(52, 100, doodlersprite, 23,22); // player ship middle bottom
 	
   while(doodler.life == alive){
-    while(flag== 1){
-			ST7735_DrawBitmap(doodler.x,doodler.y,doodler.image,16, 10);
-		  flag = 0;
-		};
+//    while(flag== 1){
+//			ST7735_DrawBitmap(doodler.x,doodler.y,doodler.image,16, 10);
+//		  flag = 0;
+//		};
 
     //ST7735_DrawBitmap(bill.x,bill.y,bill.image,16,10);
 		
