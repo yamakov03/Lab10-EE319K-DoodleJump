@@ -14,7 +14,6 @@
 #include "gameEngine.h"
 
 SlidePot my(1500,0);
-
 extern "C" void DisableInterrupts(void);
 extern "C" void EnableInterrupts(void);
 extern "C" void SysTick_Handler(void);
