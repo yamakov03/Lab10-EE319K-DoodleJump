@@ -86,21 +86,21 @@ int main(void){
 	PortB_Init();
   EnableInterrupts();
 	
-	ST7735_PlotClear(160,160);
+	//ST7735_PlotClear(160,160);
   ST7735_DrawBitmap(52, 100, doodlersprite, 23,22); // player ship middle bottom
 	
-  while(doodler.life == alive){
-//    while(flag== 1){
-//			ST7735_DrawBitmap(doodler.x,doodler.y,doodler.image,16, 10);
-//		  flag = 0;
-//		};
+//  while(doodler.life == alive){
+////    while(flag== 1){
+////			ST7735_DrawBitmap(doodler.x,doodler.y,doodler.image,16, 10);
+////		  flag = 0;
+////		};
 
-    //ST7735_DrawBitmap(bill.x,bill.y,bill.image,16,10);
-		
-		
-  }
+//    //ST7735_DrawBitmap(bill.x,bill.y,bill.image,16,10);
+//		
+//		
+//  }
 
-  ST7735_FillScreen(0x0000);            // set screen to black
+  ST7735_FillScreen(0xFFFF);            // set screen to black
   ST7735_SetCursor(1, 1);
   ST7735_OutString((char*)"GAME OVER");
   ST7735_SetCursor(1, 2);
