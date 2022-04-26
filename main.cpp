@@ -50,8 +50,6 @@ struct platform{
 	int32_t vx;			// x velocity
 	int32_t vy;			// y velocity
   status_t life;         // dead/alive
-	int movex; //blue platforms
-	int initialx;
 }; typedef struct platform platform;
 
 #define MAXGREENPLATFORMS 5
@@ -113,7 +111,6 @@ void Init(void){
 	
 	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
 		blueplatform[i].x = Random()%MAXWIDTH;
-		blueplatform[i].initialx = blueplatform[i].x;
 		blueplatform[i].y = MAXHEIGHT - i*gapblue;
 		blueplatform[i].image = blue_platform_sprite;
 		blueplatform[i].w = 31;
@@ -148,10 +145,10 @@ void Draw(void) {
 	
 	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
 		blueplatform[i].x += blueplatform[i].vx;
-		if(blueplatform[i].initialx - blueplatform[i].x == 0){
+		if(blueplatform[i].x == 120){
 			blueplatform[i].vx *= -1;
 		}
-		if(blueplatform[i].x == blueplatform[i].initialx){
+		if(blueplatform[i].x == 0){
 			blueplatform[i].vx *= -1;
 		}
 		ST7735_DrawBitmap(blueplatform[i].x, blueplatform[i].y, blueplatform[i].image, blueplatform[i].w, blueplatform[i].h);
