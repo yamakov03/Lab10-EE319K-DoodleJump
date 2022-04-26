@@ -69,6 +69,7 @@ void delay1ms(uint32_t count);
 
 void Init(void){ 
 	int i;
+	
 	doodler.x = 50;
 	doodler.y = 80;
 	doodler.image = doodler_sprite;
@@ -78,7 +79,7 @@ void Init(void){
 	doodler.vy = 1; //(Random()%3);	// 0 to 2
 	doodler.life = alive;
 	
-	for(int i = 0; i < 5; i++) {
+	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
 		greenplatform[i].x = (Random()%70)+10;
 		greenplatform[i].y = (Random()%160)+30;
 		greenplatform[i].image = green_platform_sprite;
@@ -88,11 +89,8 @@ void Init(void){
 		greenplatform[i].vy = 0; 
 		greenplatform[i].life = alive;
 	}
-	for(int i = 5; i < MAXGREENPLATFORMS; i++) {
-		greenplatform[i].life = alive;
-	}
 	
-	for(int i = 0; i < 1; i++) {
+	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
 		blueplatform[i].x = (Random()%70)+10;
 		blueplatform[i].y = (Random()%160)+30;
 		blueplatform[i].image = blue_platform_sprite;
@@ -100,10 +98,6 @@ void Init(void){
 		blueplatform[i].h = 11;
 		blueplatform[i].vx = 1; 
 		blueplatform[i].vy = 0; 
-		blueplatform[i].life = alive;
-	}
-	
-	for(int i = 1; i < MAXBLUEPLATFORMS; i++) {
 		blueplatform[i].life = alive;
 	}
 	
@@ -121,14 +115,17 @@ void Init(void){
 void Draw(void) {
 	flag = 1; // semaphore
 	ST7735_DrawBitmap(doodler.x, doodler.y, doodler.image, doodler.w, doodler.h);
+	
 	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
 		if(greenplatform[i].life == alive) {
+			ST7735_DrawBitmap(blueplatform[i].x, blueplatform[i].y, 0, blueplatform[i].w, blueplatform[i].h);
 			if(globalheight >= 40) greenplatform[i].y = doodler.y;
 			ST7735_DrawBitmap(greenplatform[i].x, greenplatform[i].y, greenplatform[i].image, greenplatform[i].w, greenplatform[i].h);
 		}
 	}
 	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
 		if(blueplatform[i].life == alive) {
+			ST7735_DrawBitmap(blueplatform[i].x, blueplatform[i].y, 0, blueplatform[i].w, blueplatform[i].h);
 			if(globalheight >= 40) blueplatform[i].y = doodler.y;
 			ST7735_DrawBitmap(blueplatform[i].x, blueplatform[i].y, blueplatform[i].image, blueplatform[i].w, blueplatform[i].h);
 		}
@@ -137,9 +134,26 @@ void Draw(void) {
 	if(doodler.x <= 0) doodler.x = MAXWIDTH;
 	if(doodler.x > MAXWIDTH) doodler.x = 0;
 	
-	if (doodler.y < platforms[platforms.length-1].y + 200) {
-    platforms.push(new Platform(random(width), platforms[platforms.length-1].y - gap));
-  }
+	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
+		if (doodler.y >= greenplatform[i].y + greenplatform[i].h) {
+				int minX = greenplatform[i].x - doodler.w;
+        int maxX = greenplatform[i].x + greenplatform[i].w;
+				if (doodler.x >= minX && doodler.x <= maxX) {
+          globalheight = doodler.y;
+        }
+		}
+	}
+		
+	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
+		if (doodler.y >= blueplatform[i].y + blueplatform[i].h) {
+				int minX = blueplatform[i].x - doodler.w;
+        int maxX = blueplatform[i].x + blueplatform[i].w;
+				if (doodler.x >= minX && doodler.x <= maxX) {
+          globalheight = doodler.y;
+        }
+		}
+	}
+	
 }
 //===============================================================================================
 
@@ -155,7 +169,7 @@ int main(void){
   Random_Init(1);
   ADC_Init(); 
 	ST7735_InitR(INITR_REDTAB);
-  Timer0_Init(Draw,1600000); // 50 Hz, calls draw to update screen  !!!originally was (Draw,800000) == 50 Hz
+  Timer0_Init(Draw,1200000); // 50 Hz, calls draw to update screen  !!!originally was (Draw,800000) == 50 Hz
   Timer1_Init(clock,80000000); // 1 Hz
 	SysTick_Init(4000000);
 	Init();
@@ -201,12 +215,12 @@ int main(void){
   while(1){
 		
 		while(doodler.life == alive){
-
+		Draw();
 		doodler.y -= doodler.vy;
-		if (doodler.y <= 80){
+		if (doodler.y <= globalheight){
 			doodler.vy *= -1;
 		}
-		if(doodler.y >= 121){
+		if(doodler.y >= globalheight + 40){
 			doodler.vy *= -1;
 		}
 		delay1ms(1);
