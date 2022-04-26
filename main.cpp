@@ -71,6 +71,7 @@ platform blueplatform[MAXBLUEPLATFORMS];
 
 int pauseState;
 int fireState;
+int nolongerstart = 0;
 
 int score = 0; //global score displayed at top left corner of screen
 uint32_t Data;
@@ -133,20 +134,30 @@ void Init(void){
 }
 
 //===========================================handle screen updates=========================================================
+int changey;
+
+void updatesprites(){
+	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
+		greenplatform[i].y += changey;
+		}
+	
+	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
+		blueplatform[i].y += changey;
+	}
+}
 void Draw(void) {
 	flag = 1; // semaphore
 	
 	ST7735_SetCursor(0, 0);
 	ST7735_OutUDec(score);
-	
+	ST7735_SetCursor(0, 1);
+	ST7735_OutUDec(time);
 	while(slideflag == 1){
-				doodler.oldx = doodler.x;
-				doodler.oldy = doodler.y;
 				doodler.x = (120*Data/4095);
 				slideflag = 0;
 	}
 	
-	ST7735_DrawBitmap(doodler.oldx, doodler.oldy,white, doodler.w, doodler.h);
+	ST7735_DrawBitmap(doodler.oldx, doodler.oldy, white, doodler.w, doodler.h);
 	ST7735_DrawBitmap(doodler.x, doodler.y, doodler.image, doodler.w, doodler.h);
 	
 	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
@@ -170,27 +181,36 @@ void Draw(void) {
 	
 	//collision logic
 	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
-		if (doodler.y >= greenplatform[i].y + greenplatform[i].h) {
+		if (doodler.y <= greenplatform[i].y + greenplatform[i].h) {
 				int minX = greenplatform[i].x - doodler.w;
         int maxX = greenplatform[i].x + greenplatform[i].w;
 				if (doodler.x >= minX && doodler.x <= maxX) {
 					score += 160 - greenplatform[i].y;
+					changey = 160 - greenplatform[i].y;
+					nolongerstart = 1;
+					updatesprites();
 		}
 	}
 }
 		
 	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
-		if (doodler.y >= blueplatform[i].y + blueplatform[i].h) {
+		if (doodler.y <= blueplatform[i].y + blueplatform[i].h) {
 				int minX = blueplatform[i].x - doodler.w;
         int maxX = blueplatform[i].x + blueplatform[i].w;
 				if (doodler.x >= minX && doodler.x <= maxX) {
           score += 160 - blueplatform[i].y;
+					changey = 160 - greenplatform[i].y;
+					nolongerstart = 1;
+					updatesprites();
         }
 		}
 	}
 	
-	//fix doodle translate issues
+	//for(int i = 0; i < MAXBLUEPLATFORMS; i++){
+	//check if .y > 160
+	//if it is, set y to 0, and randomize the x coord.
 }
+	//fix doodle translate issues
 //===============================================================================================
 
 void clock(void){
@@ -255,8 +275,9 @@ int main(void){
 		
 		
 		while(doodler.life == alive){
-			
 		
+		doodler.oldx = doodler.x;	
+		doodler.oldy = doodler.y;
 		doodler.y -= doodler.vy;
 		if (doodler.y >= 120){
 			doodler.vy *= -1;
@@ -265,10 +286,18 @@ int main(void){
 			doodler.vy *= -1;
 		}
 		delay1ms(1);
+		
+		if(doodler.y > 150){
+			doodler.life == dead;
+		}
 
+		while(pauseState == 1){
+		
+		}
+			
 	}
 	
-	if(doodler.life == dead){
+	if(doodler.life == dead && nolongerstart == 1){
 		ST7735_FillScreen(0x0000);            // set screen to black
 		ST7735_SetCursor(1, 1);
 		ST7735_FillScreen(0xFFFF);
@@ -288,13 +317,8 @@ int main(void){
 }
 
 void SysTick_Handler(void){ // every sample
-    //*** students write this ******
-// toggle heartbeat LED (change from 0 to 1, or from 1 to 0)
-	//GPIO_PORTF_DATA_R ^= 0x04;
-// sample the ADC calling ADC_In()
 	Data = ADC_In();
 	slideflag = 1;
-// save the 12-bit ADC sample using the member function Sensor.Save()
 	my.Save(Data);
 }
 
