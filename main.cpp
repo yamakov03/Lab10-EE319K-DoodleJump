@@ -54,6 +54,12 @@ sprite_t blueplatform[MAXBLUEPLATFORMS];
 sprite_t redenemy[MAXREDENEMIES];
 sprite_t blueenemy[MAXBLUENEMIES];
 
+
+int pauseState;
+int fireState;
+void delay100ms(uint32_t count);
+void delay10ms(uint32_t count);
+
 void Init(void){ int i;
 	doodler.x = 50;
 	doodler.y = 80;
@@ -162,11 +168,31 @@ int main(void){
 	Init();
 	PortF_Init();
 	PortE_Init();
-	PortB_Init();
-  EnableInterrupts();
+	PortB_Init();	
+	ST7735_FillScreen(0xFFFF);
+	ST7735_DrawBitmap(10, 40, titlelogo, 104, 26);
+	ST7735_SetCursor(20, 100);
+	ST7735_OutString("Press buttons");
+	ST7735_SetCursor(20,100);
+	ST7735_OutString("to continue");
+	
+
+	
+	while(fireState != 1 && pauseState != 1){}
+		
+		
+	
+	
+	
+			fireState |= ((GPIO_PORTE_DATA_R & 2) >> 1);
+			pauseState |= ((GPIO_PORTE_DATA_R & 1));
+	
+	EnableInterrupts();
 	
 	ST7735_FillScreen(0xFFFF); 
 	Draw();
+	
+	
   while(doodler.life == alive){
 //		ST7735_FillScreen(0x0000); 
 //		Draw();
@@ -180,7 +206,7 @@ int main(void){
 		ST7735_SetTextColor(ST7735_WHITE);
 		ST7735_OutString((char*)"Score: ");
 		ST7735_SetCursor(1, 3);
-		ST7735_OutUDec(score:);
+		ST7735_OutUDec(score);
 	}
 
   
@@ -203,4 +229,26 @@ void SysTick_Handler(void){ // every sample
 	flag = 1;
 // save the 12-bit ADC sample using the member function Sensor.Save()
 	my.Save(Data);
+}
+
+
+
+
+void delay100ms(uint32_t count){uint32_t volatile time;
+  while(count>0){
+    time = 727240;  // 0.1sec at 80 MHz
+    while(time){
+	  	time--;
+    }
+    count--;
+  }
+}
+void delay10ms(uint32_t count){uint32_t volatile time;
+  while(count>0){
+    time = 72724;  // 0.1sec at 80 MHz
+    while(time){
+	  	time--;
+    }
+    count--;
+  }
 }

@@ -116,6 +116,8 @@
 // Gnd (pin 2) connected to ground
 // VCC (pin 1) connected to +3.3 V
 
+#include <stdint.h>
+
 #ifndef _ST7735H_
 #define _ST7735H_
 
