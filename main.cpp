@@ -59,6 +59,7 @@ int pauseState;
 int fireState;
 void delay100ms(uint32_t count);
 void delay10ms(uint32_t count);
+void delay1ms(uint32_t count);
 
 void Init(void){ int i;
 	doodler.x = 50;
@@ -67,7 +68,7 @@ void Init(void){ int i;
 	doodler.w = 23;
 	doodler.h = 22;
 	doodler.vx = 0; //(Random()%5)-2;	// -2 to 2
-	doodler.vy = 2; //(Random()%3);	// 0 to 2
+	doodler.vy = 1; //(Random()%3);	// 0 to 2
 	doodler.life = alive;
 	
 	for(int i = 0; i < 5; i++) {
@@ -169,16 +170,30 @@ int main(void){
 	PortF_Init();
 	PortE_Init();
 	PortB_Init();	
+	
+	
 	ST7735_FillScreen(0xFFFF);
 	ST7735_DrawBitmap(10, 40, titlelogo, 104, 26);
-	ST7735_SetCursor(20, 100);
-	ST7735_OutString("Press buttons");
-	ST7735_SetCursor(20,100);
-	ST7735_OutString("to continue");
+	ST7735_SetCursor(3, 14);
+	ST7735_OutString("Press any button");
+	ST7735_SetCursor(4,15);
+	ST7735_OutString("to start game");
+	ST7735_DrawBitmap(50, 130, green_platform_sprite, 30, 11);
 	
 
+	doodler.y = 121;
+	while(fireState != 1 && pauseState != 1){
+		doodler.y -= doodler.vy;
+		if (doodler.y <= 80){
+			doodler.vy *= -1;
+		}
+		if(doodler.y >= 121){
+			doodler.vy *= -1;
+		}
+		delay1ms(1);
 	
-	while(fireState != 1 && pauseState != 1){}
+	ST7735_DrawBitmap(50, doodler.y, doodler.image, 23, 22);
+	}
 		
 		
 	
@@ -236,7 +251,7 @@ void SysTick_Handler(void){ // every sample
 
 void delay100ms(uint32_t count){uint32_t volatile time;
   while(count>0){
-    time = 727240;  // 0.1sec at 80 MHz
+    time = 727240;  // 1sec at 80 MHz
     while(time){
 	  	time--;
     }
@@ -246,6 +261,15 @@ void delay100ms(uint32_t count){uint32_t volatile time;
 void delay10ms(uint32_t count){uint32_t volatile time;
   while(count>0){
     time = 72724;  // 0.1sec at 80 MHz
+    while(time){
+	  	time--;
+    }
+    count--;
+  }
+}
+void delay1ms(uint32_t count){uint32_t volatile time;
+  while(count>0){
+    time = 7272;  // 0.01sec at 80 MHz
     while(time){
 	  	time--;
     }
