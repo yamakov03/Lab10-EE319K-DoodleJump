@@ -33,6 +33,8 @@ typedef enum {dead, alive, dying} status_t;
 
 //-------------------------------doodler--------------------------
 struct sprite{
+	int32_t oldx;
+	int32_t oldy;
   int32_t x;      // x coordinate
   int32_t y;      // y coordinate
 	const uint16_t *image; // ptr->image
@@ -137,6 +139,14 @@ void Draw(void) {
 	ST7735_SetCursor(0, 0);
 	ST7735_OutUDec(score);
 	
+	while(slideflag == 1){
+				doodler.oldx = doodler.x;
+				doodler.oldy = doodler.y;
+				doodler.x = (120*Data/4095);
+				slideflag = 0;
+	}
+	
+	ST7735_DrawBitmap(doodler.oldx, doodler.oldy,white, doodler.w, doodler.h);
 	ST7735_DrawBitmap(doodler.x, doodler.y, doodler.image, doodler.w, doodler.h);
 	
 	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
@@ -241,22 +251,20 @@ int main(void){
 	EnableInterrupts();
   while(1){
 		my.Sync();
-		while(slideflag == 1){
-			doodler.x = (120*Data/4095);
-			slideflag = 0;
-		}
+
 		
 		
 		while(doodler.life == alive){
+			
 		
-//		doodler.y -= doodler.vy;
-//		if (doodler.y >= 120){
-//			doodler.vy *= -1;
-//		}
-//		if(doodler.y <= 160){
-//			doodler.vy *= -1;
-//		}
-//		delay1ms(1);
+		doodler.y -= doodler.vy;
+		if (doodler.y >= 120){
+			doodler.vy *= -1;
+		}
+		if(doodler.y <= 160){
+			doodler.vy *= -1;
+		}
+		delay1ms(1);
 
 	}
 	
