@@ -41,8 +41,8 @@ void PortE_Init(void){
 // Initialize Port B so PB3-0 are for the DAC
 void PortB_Init(void){
 	volatile uint32_t delay;
-	SYSCTL_RCGC2_R |= SYSCTL_RCGC2_GPIOB;
-	delay = SYSCTL_RCGC2_R; 
+	SYSCTL_RCGCGPIO_R |= 0x02;
+	delay = SYSCTL_RCGCGPIO_R; 
 
   GPIO_PORTB_DIR_R |= 0x0F;    // 5) outputs on PB3-0
 	GPIO_PORTB_DEN_R |= 0x0F;    // 7) enable digital on PB3-0

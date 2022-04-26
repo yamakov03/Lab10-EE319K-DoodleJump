@@ -47,6 +47,7 @@ typedef struct sprite sprite_t;
 #define MAXBLUEPLATFORMS 5
 #define MAXREDENEMIES 2
 #define MAXBLUENEMIES 2
+#define MAXWIDTH 160
 
 sprite_t doodler;
 sprite_t greenplatform[MAXGREENPLATFORMS];
@@ -57,11 +58,17 @@ sprite_t blueenemy[MAXBLUENEMIES];
 
 int pauseState;
 int fireState;
+
+int globalheight = 0; //have a global y coord that matches with base height of the doodler. Also doubles as score.
+uint32_t time = 0;
+volatile uint32_t flag;
+
 void delay100ms(uint32_t count);
 void delay10ms(uint32_t count);
 void delay1ms(uint32_t count);
 
-void Init(void){ int i;
+void Init(void){ 
+	int i;
 	doodler.x = 50;
 	doodler.y = 80;
 	doodler.image = doodler_sprite;
@@ -73,7 +80,7 @@ void Init(void){ int i;
 	
 	for(int i = 0; i < 5; i++) {
 		greenplatform[i].x = (Random()%70)+10;
-		greenplatform[i].y = (Random()%160)+10;
+		greenplatform[i].y = (Random()%160)+30;
 		greenplatform[i].image = green_platform_sprite;
 		greenplatform[i].w = 30;
 		greenplatform[i].h = 11;
@@ -82,12 +89,12 @@ void Init(void){ int i;
 		greenplatform[i].life = alive;
 	}
 	for(int i = 5; i < MAXGREENPLATFORMS; i++) {
-		greenplatform[i].life = dead;
+		greenplatform[i].life = alive;
 	}
 	
 	for(int i = 0; i < 1; i++) {
 		blueplatform[i].x = (Random()%70)+10;
-		blueplatform[i].y = (Random()%160)+10;
+		blueplatform[i].y = (Random()%160)+30;
 		blueplatform[i].image = blue_platform_sprite;
 		blueplatform[i].w = 31;
 		blueplatform[i].h = 11;
@@ -97,59 +104,44 @@ void Init(void){ int i;
 	}
 	
 	for(int i = 1; i < MAXBLUEPLATFORMS; i++) {
-		blueplatform[i].life = dead;
+		blueplatform[i].life = alive;
 	}
 	
 	for(int i = 0; i < MAXREDENEMIES; i++) {
-		redenemy[i].life = dead;
+		redenemy[i].life = alive;
 	}
 	
 	for(int i = 0; i < MAXBLUENEMIES; i++) {
-		blueenemy[i].life = dead;
+		blueenemy[i].life = alive;
 	}
-}
-
-void Move(void) {
 	
 }
 
+//===========================================handle screen updates===============================
 void Draw(void) {
-	//if(doodler.life == alive) {
+	flag = 1; // semaphore
 	ST7735_DrawBitmap(doodler.x, doodler.y, doodler.image, doodler.w, doodler.h);
 	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
 		if(greenplatform[i].life == alive) {
+			if(globalheight >= 40) greenplatform[i].y = doodler.y;
 			ST7735_DrawBitmap(greenplatform[i].x, greenplatform[i].y, greenplatform[i].image, greenplatform[i].w, greenplatform[i].h);
 		}
 	}
 	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
 		if(blueplatform[i].life == alive) {
+			if(globalheight >= 40) blueplatform[i].y = doodler.y;
 			ST7735_DrawBitmap(blueplatform[i].x, blueplatform[i].y, blueplatform[i].image, blueplatform[i].w, blueplatform[i].h);
 		}
 	}
-	//}
-}
-
-int position;
-
-
-
-uint32_t time = 0;
-uint32_t score = 0;
-
-
-volatile uint32_t flag;
-
-void background(void){
-  flag = 1; // semaphore
+//======update all sprite positions here=============
+	if(doodler.x <= 0) doodler.x = MAXWIDTH;
+	if(doodler.x > MAXWIDTH) doodler.x = 0;
 	
-  if(doodler.life == alive){
-    doodler.x = position;
-  }
-	
-  if(doodler.y>155){
-    doodler.life = dead;
+	if (doodler.y < platforms[platforms.length-1].y + 200) {
+    platforms.push(new Platform(random(width), platforms[platforms.length-1].y - gap));
   }
 }
+//===============================================================================================
 
 void clock(void){
   time++;
@@ -163,15 +155,14 @@ int main(void){
   Random_Init(1);
   ADC_Init(); 
 	ST7735_InitR(INITR_REDTAB);
-  Timer0_Init(background,800000); // 50 Hz
+  Timer0_Init(Draw,1600000); // 50 Hz, calls draw to update screen  !!!originally was (Draw,800000) == 50 Hz
   Timer1_Init(clock,80000000); // 1 Hz
 	SysTick_Init(4000000);
 	Init();
 	PortF_Init();
 	PortE_Init();
-	PortB_Init();	
-	
-	
+	PortB_Init();		
+//==========================start screen============================================================
 	ST7735_FillScreen(0xFFFF);
 	ST7735_DrawBitmap(10, 40, titlelogo, 104, 26);
 	ST7735_SetCursor(3, 14);
@@ -180,9 +171,37 @@ int main(void){
 	ST7735_OutString("to start game");
 	ST7735_DrawBitmap(50, 130, green_platform_sprite, 30, 11);
 	
-
+	fireState = 0;
+	pauseState = 0;
 	doodler.y = 121;
+	doodler.x = 50;
+	
 	while(fireState != 1 && pauseState != 1){
+		doodler.y -= doodler.vy;
+		if (doodler.y <=80){
+			doodler.vy *= -1;
+		}
+		if(doodler.y >= 121){
+			doodler.vy *= -1;
+		}
+		
+		delay1ms(1);
+	
+	ST7735_DrawBitmap(50, doodler.y, doodler.image, 23, 22);
+			fireState ^= ((GPIO_PORTE_DATA_R & 0x02) >> 1);
+			pauseState ^= ((GPIO_PORTE_DATA_R & 0x01));
+	}
+//===========================================================================================
+	ST7735_FillScreen(0xFFFF); 
+	doodler.y = 160;
+	doodler.x = 50;
+	
+	
+	EnableInterrupts();
+  while(1){
+		
+		while(doodler.life == alive){
+
 		doodler.y -= doodler.vy;
 		if (doodler.y <= 80){
 			doodler.vy *= -1;
@@ -191,26 +210,7 @@ int main(void){
 			doodler.vy *= -1;
 		}
 		delay1ms(1);
-	
-	ST7735_DrawBitmap(50, doodler.y, doodler.image, 23, 22);
-	}
-		
-		
-	
-	
-	
-			fireState |= ((GPIO_PORTE_DATA_R & 2) >> 1);
-			pauseState |= ((GPIO_PORTE_DATA_R & 1));
-	
-	EnableInterrupts();
-	
-	ST7735_FillScreen(0xFFFF); 
-	Draw();
-	
-	
-  while(doodler.life == alive){
-//		ST7735_FillScreen(0x0000); 
-//		Draw();
+
 	}
 	
 	if(doodler.life == dead){
@@ -221,11 +221,9 @@ int main(void){
 		ST7735_SetTextColor(ST7735_WHITE);
 		ST7735_OutString((char*)"Score: ");
 		ST7735_SetCursor(1, 3);
-		ST7735_OutUDec(score);
+		ST7735_OutUDec(globalheight);
 	}
 
-  
-  while(1){
     while(flag==0){};
     flag = 0;
     ST7735_SetCursor(2, 4);
@@ -245,9 +243,6 @@ void SysTick_Handler(void){ // every sample
 // save the 12-bit ADC sample using the member function Sensor.Save()
 	my.Save(Data);
 }
-
-
-
 
 void delay100ms(uint32_t count){uint32_t volatile time;
   while(count>0){
