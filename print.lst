@@ -213,11 +213,12 @@ ARM Macro Assembler    Page 4
                                                              aligned
   167 0000010C                 END                          ; end of file
 Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M4 --apcs=interw
-ork --depend=.\print.d -o.\print.o -I.\RTE\_Lab_10 -IC:\Users\alexj\AppData\Loc
-al\Arm\Packs\ARM\CMSIS\5.8.0\CMSIS\Core\Include -IC:\Users\alexj\AppData\Local\
-Arm\Packs\Keil\TM4C_DFP\1.1.0\Device\Include\TM4C123 --predefine="__EVAL SETA 1
-" --predefine="__UVISION_VERSION SETA 536" --predefine="_RTE_ SETA 1" --predefi
-ne="TM4C123GH6PM SETA 1" --predefine="_RTE_ SETA 1" --list=.\print.lst print.s
+ork --depend=.\print.d -o.\print.o -I.\RTE\_Lab_10 -IC:\Users\dyamakov\AppData\
+Local\Arm\Packs\ARM\CMSIS\5.8.0\CMSIS\Core\Include -IC:\Users\dyamakov\AppData\
+Local\Arm\Packs\Keil\TM4C_DFP\1.1.0\Device\Include\TM4C123 --predefine="__EVAL 
+SETA 1" --predefine="__UVISION_VERSION SETA 536" --predefine="_RTE_ SETA 1" --p
+redefine="TM4C123GH6PM SETA 1" --predefine="_RTE_ SETA 1" --list=.\print.lst pr
+int.s
 
 
 

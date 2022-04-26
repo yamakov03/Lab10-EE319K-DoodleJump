@@ -40,14 +40,17 @@ struct sprite{
 	int32_t vx;			// x velocity
 	int32_t vy;			// y velocity
   status_t life;         // dead/alive
+	int jumpmin;
+	int jumpmax;
 };
 typedef struct sprite sprite_t;
 
-#define MAXGREENPLATFORMS 15
-#define MAXBLUEPLATFORMS 5
+#define MAXGREENPLATFORMS 5
+#define MAXBLUEPLATFORMS 2
 #define MAXREDENEMIES 2
 #define MAXBLUENEMIES 2
-#define MAXWIDTH 160
+#define MAXWIDTH 128
+#define MAXHEIGHT 160
 
 sprite_t doodler;
 sprite_t greenplatform[MAXGREENPLATFORMS];
@@ -59,14 +62,14 @@ sprite_t blueenemy[MAXBLUENEMIES];
 int pauseState;
 int fireState;
 
-int globalheight = 0; //have a global y coord that matches with base height of the doodler. Also doubles as score.
+int score = 0; //global score displayed at top left corner of screen
 uint32_t time = 0;
 volatile uint32_t flag;
 
 void delay100ms(uint32_t count);
 void delay10ms(uint32_t count);
 void delay1ms(uint32_t count);
-
+//==================================================initialization=========================================
 void Init(void){ 
 	int i;
 	
@@ -79,20 +82,33 @@ void Init(void){
 	doodler.vy = 1; //(Random()%3);	// 0 to 2
 	doodler.life = alive;
 	
+	int gap = MAXHEIGHT/(MAXGREENPLATFORMS + MAXBLUEPLATFORMS);
+	
 	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
-		greenplatform[i].x = (Random()%70)+10;
-		greenplatform[i].y = (Random()%160)+30;
+		greenplatform[i].x = Random()%MAXWIDTH;
+		greenplatform[i].y = MAXHEIGHT - i*gap;
 		greenplatform[i].image = green_platform_sprite;
 		greenplatform[i].w = 30;
 		greenplatform[i].h = 11;
 		greenplatform[i].vx = 0; //green platforms don't move
 		greenplatform[i].vy = 0; 
 		greenplatform[i].life = alive;
+		
 	}
 	
 	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
-		blueplatform[i].x = (Random()%70)+10;
-		blueplatform[i].y = (Random()%160)+30;
+		blueplatform[i].x = Random()%MAXWIDTH;
+		blueplatform[i].y = MAXHEIGHT - i*gap;
+		
+//		for(int j = 0; j < MAXGREENPLATFORMS; j++){
+//			if(blueplatform[i].y != greenplatform[j].y){
+//				blueplatform[i].y = MAXHEIGHT - i*gap;
+//			} else{
+//			blueplatform[i].x = 999; //send blue platform off the screen so its not visible - do not want green and blue platforms on top of each other
+//			}
+//		}
+		
+		
 		blueplatform[i].image = blue_platform_sprite;
 		blueplatform[i].w = 31;
 		blueplatform[i].h = 11;
@@ -111,49 +127,60 @@ void Init(void){
 	
 }
 
-//===========================================handle screen updates===============================
+//===========================================handle screen updates=========================================================
 void Draw(void) {
 	flag = 1; // semaphore
+	
+	ST7735_SetCursor(0, 0);
+	ST7735_OutUDec(score);
+	
 	ST7735_DrawBitmap(doodler.x, doodler.y, doodler.image, doodler.w, doodler.h);
 	
 	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
 		if(greenplatform[i].life == alive) {
-			ST7735_DrawBitmap(blueplatform[i].x, blueplatform[i].y, 0, blueplatform[i].w, blueplatform[i].h);
-			if(globalheight >= 40) greenplatform[i].y = doodler.y;
+			if(doodler.y <= greenplatform[i].y + greenplatform[i].h){
+				greenplatform[i].y -= (doodler.y - greenplatform[i].y);
+			} 
 			ST7735_DrawBitmap(greenplatform[i].x, greenplatform[i].y, greenplatform[i].image, greenplatform[i].w, greenplatform[i].h);
 		}
 	}
+	
 	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
 		if(blueplatform[i].life == alive) {
-			ST7735_DrawBitmap(blueplatform[i].x, blueplatform[i].y, 0, blueplatform[i].w, blueplatform[i].h);
-			if(globalheight >= 40) blueplatform[i].y = doodler.y;
+			if(doodler.y <= blueplatform[i].y + blueplatform[i].h){
+				blueplatform[i].y -= (doodler.y - blueplatform[i].y);
+			} 
 			ST7735_DrawBitmap(blueplatform[i].x, blueplatform[i].y, blueplatform[i].image, blueplatform[i].w, blueplatform[i].h);
 		}
 	}
-//======update all sprite positions here=============
+
+	
+	
 	if(doodler.x <= 0) doodler.x = MAXWIDTH;
 	if(doodler.x > MAXWIDTH) doodler.x = 0;
 	
+	//collision logic
 	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
 		if (doodler.y >= greenplatform[i].y + greenplatform[i].h) {
 				int minX = greenplatform[i].x - doodler.w;
         int maxX = greenplatform[i].x + greenplatform[i].w;
 				if (doodler.x >= minX && doodler.x <= maxX) {
-          globalheight = doodler.y;
-        }
+					doodler.vx *= -1;
 		}
 	}
+}
 		
 	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
 		if (doodler.y >= blueplatform[i].y + blueplatform[i].h) {
 				int minX = blueplatform[i].x - doodler.w;
         int maxX = blueplatform[i].x + blueplatform[i].w;
 				if (doodler.x >= minX && doodler.x <= maxX) {
-          globalheight = doodler.y;
+          score += doodler.y;
         }
 		}
 	}
 	
+	//fix doodle translate issues
 }
 //===============================================================================================
 
@@ -192,6 +219,7 @@ int main(void){
 	
 	while(fireState != 1 && pauseState != 1){
 		doodler.y -= doodler.vy;
+		
 		if (doodler.y <=80){
 			doodler.vy *= -1;
 		}
@@ -215,12 +243,12 @@ int main(void){
   while(1){
 		
 		while(doodler.life == alive){
-		Draw();
+		//Draw();
 		doodler.y -= doodler.vy;
-		if (doodler.y <= globalheight){
+		if (doodler.y >= 120){
 			doodler.vy *= -1;
 		}
-		if(doodler.y >= globalheight + 40){
+		if(doodler.y <= 160){
 			doodler.vy *= -1;
 		}
 		delay1ms(1);
@@ -235,7 +263,7 @@ int main(void){
 		ST7735_SetTextColor(ST7735_WHITE);
 		ST7735_OutString((char*)"Score: ");
 		ST7735_SetCursor(1, 3);
-		ST7735_OutUDec(globalheight);
+		ST7735_OutUDec(score);
 	}
 
     while(flag==0){};
