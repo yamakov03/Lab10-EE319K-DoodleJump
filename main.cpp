@@ -40,20 +40,66 @@ struct sprite{
 	int32_t vx;			// x velocity
 	int32_t vy;			// y velocity
   status_t life;         // dead/alive
-};        
-
+};
 typedef struct sprite sprite_t;
 
+#define MAXGREENPLATFORMS 15
+#define MAXBLUEPLATFORMS 5
+#define MAXREDENEMIES 2
+#define MAXBLUENEMIES 2
+
 sprite_t doodler;
+sprite_t greenplatform[MAXGREENPLATFORMS];
+sprite_t blueplatform[MAXBLUEPLATFORMS];
+sprite_t redenemy[MAXREDENEMIES];
+sprite_t blueenemy[MAXBLUENEMIES];
+
 void Init(void){ int i;
 	doodler.x = 50;
-	doodler.y = 50;
-	doodler.image = doodlersprite;
+	doodler.y = 80;
+	doodler.image = doodler_sprite;
 	doodler.w = 23;
 	doodler.h = 22;
 	doodler.vx = 0; //(Random()%5)-2;	// -2 to 2
 	doodler.vy = 2; //(Random()%3);	// 0 to 2
 	doodler.life = alive;
+	
+	for(int i = 0; i < 5; i++) {
+		greenplatform[i].x = (Random()%70)+10;
+		greenplatform[i].y = (Random()%160)+10;
+		greenplatform[i].image = green_platform_sprite;
+		greenplatform[i].w = 30;
+		greenplatform[i].h = 11;
+		greenplatform[i].vx = 0; //green platforms don't move
+		greenplatform[i].vy = 0; 
+		greenplatform[i].life = alive;
+	}
+	for(int i = 5; i < MAXGREENPLATFORMS; i++) {
+		greenplatform[i].life = dead;
+	}
+	
+	for(int i = 0; i < 1; i++) {
+		blueplatform[i].x = (Random()%70)+10;
+		blueplatform[i].y = (Random()%160)+10;
+		blueplatform[i].image = blue_platform_sprite;
+		blueplatform[i].w = 31;
+		blueplatform[i].h = 11;
+		blueplatform[i].vx = 1; 
+		blueplatform[i].vy = 0; 
+		blueplatform[i].life = alive;
+	}
+	
+	for(int i = 1; i < MAXBLUEPLATFORMS; i++) {
+		blueplatform[i].life = dead;
+	}
+	
+	for(int i = 0; i < MAXREDENEMIES; i++) {
+		redenemy[i].life = dead;
+	}
+	
+	for(int i = 0; i < MAXBLUENEMIES; i++) {
+		blueenemy[i].life = dead;
+	}
 }
 
 void Move(void) {
@@ -62,7 +108,17 @@ void Move(void) {
 
 void Draw(void) {
 	//if(doodler.life == alive) {
-		ST7735_DrawBitmap((Random()%100), (Random()%100), doodlersprite, doodler.w,doodler.h);
+	ST7735_DrawBitmap(doodler.x, doodler.y, doodler.image, doodler.w, doodler.h);
+	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
+		if(greenplatform[i].life == alive) {
+			ST7735_DrawBitmap(greenplatform[i].x, greenplatform[i].y, greenplatform[i].image, greenplatform[i].w, greenplatform[i].h);
+		}
+	}
+	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
+		if(blueplatform[i].life == alive) {
+			ST7735_DrawBitmap(blueplatform[i].x, blueplatform[i].y, blueplatform[i].image, blueplatform[i].w, blueplatform[i].h);
+		}
+	}
 	//}
 }
 
@@ -79,9 +135,9 @@ volatile uint32_t flag;
 void background(void){
   flag = 1; // semaphore
 	
-  if(doodler.life == alive){
-    doodler.x = position;
-  }
+//  if(doodler.life == alive){
+//    doodler.x = position;
+//  }
 	
   if(doodler.y>155){
     doodler.life = dead;
@@ -109,12 +165,11 @@ int main(void){
 	PortB_Init();
   EnableInterrupts();
 	
-	//ST7735_PlotClear(160,160);
-  //ST7735_DrawBitmap(52, 100, doodlersprite, 23,22); // player ship middle bottom
-	
+	ST7735_FillScreen(0xFFFF); 
+	Draw();
   while(doodler.life == alive){
-		ST7735_FillScreen(0x0000); 
-		Draw();
+//		ST7735_FillScreen(0x0000); 
+//		Draw();
 	}
 
   ST7735_FillScreen(0x0000);            // set screen to black
