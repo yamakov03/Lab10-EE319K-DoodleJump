@@ -135,9 +135,9 @@ volatile uint32_t flag;
 void background(void){
   flag = 1; // semaphore
 	
-//  if(doodler.life == alive){
-//    doodler.x = position;
-//  }
+  if(doodler.life == alive){
+    doodler.x = position;
+  }
 	
   if(doodler.y>155){
     doodler.life = dead;
@@ -156,8 +156,8 @@ int main(void){
   Random_Init(1);
   ADC_Init(); 
 	ST7735_InitR(INITR_REDTAB);
-  Timer0_Init(&background,800000); // 50 Hz
-  Timer1_Init(&clock,80000000); // 1 Hz
+  Timer0_Init(background,800000); // 50 Hz
+  Timer1_Init(clock,80000000); // 1 Hz
 	SysTick_Init(4000000);
 	Init();
 	PortF_Init();
@@ -171,15 +171,19 @@ int main(void){
 //		ST7735_FillScreen(0x0000); 
 //		Draw();
 	}
+	
+	if(doodler.life == dead){
+		ST7735_FillScreen(0x0000);            // set screen to black
+		ST7735_SetCursor(1, 1);
+		ST7735_OutString((char*)"GAME OVER");
+		ST7735_SetCursor(1, 2);
+		ST7735_SetTextColor(ST7735_WHITE);
+		ST7735_OutString((char*)"Score: ");
+		ST7735_SetCursor(1, 3);
+		ST7735_OutUDec(score:);
+	}
 
-  ST7735_FillScreen(0x0000);            // set screen to black
-  ST7735_SetCursor(1, 1);
-  ST7735_OutString((char*)"GAME OVER");
-  ST7735_SetCursor(1, 2);
-  ST7735_SetTextColor(ST7735_WHITE);
-  ST7735_OutString((char*)"Score: ");
-  ST7735_SetCursor(1, 3);
-  ST7735_OutUDec(score);
+  
   while(1){
     while(flag==0){};
     flag = 0;
