@@ -126,7 +126,7 @@
 // Requires (11 + size*size*6*8) bytes of transmission for each character
 uint32_t StX=0; // position along the horizonal axis 0 to 20
 uint32_t StY=0; // position along the vertical axis 0 to 15
-uint16_t StTextColor = ST7735_YELLOW;
+uint16_t StTextColor = ST7735_BLACK;
 
 #define ST7735_NOP     0x00
 #define ST7735_SWRESET 0x01
@@ -1252,7 +1252,7 @@ uint32_t ST7735_DrawString(uint16_t x, uint16_t y, char *pt, int16_t textColor){
   uint32_t count = 0;
   if(y>15) return 0;
   while(*pt){
-    ST7735_DrawCharS(x*6, y*10, *pt, textColor, ST7735_BLACK, 1);
+    ST7735_DrawCharS(x*6, y*10, *pt, ST7735_BLACK, ST7735_WHITE, 1);
     pt++;
     x = x+1;
     if(x>20) return count;  // number of characters printed
@@ -1304,11 +1304,11 @@ void ST7735_OutUDec(uint32_t n){
   Messageindex = 0;
   fillmessage(n);
   Message[Messageindex] = 0; // terminate
-  ST7735_DrawString(StX,StY,Message,StTextColor);
+  ST7735_DrawString(StX,StY,Message,ST7735_WHITE);
   StX = StX+Messageindex;
   if(StX>20){
     StX = 20;
-    ST7735_DrawCharS(StX*6,StY*10,'*',ST7735_RED,ST7735_BLACK, 1);
+    ST7735_DrawCharS(StX*6,StY*10,'*',ST7735_RED,ST7735_WHITE, 1);
   }
 }
 
@@ -1647,7 +1647,7 @@ void ST7735_OutChar(char ch){
     if(StY>15){
       StY = 0;
     }
-    ST7735_DrawString(0,StY,"                     ",StTextColor);
+    ST7735_DrawString(0,StY,"                     ",ST7735_WHITE);
     return;
   }
   ST7735_DrawCharS(StX*6,StY*10,ch,ST7735_BLACK,ST7735_WHITE, 1);

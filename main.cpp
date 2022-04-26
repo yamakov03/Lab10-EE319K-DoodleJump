@@ -40,10 +40,19 @@ struct sprite{
 	int32_t vx;			// x velocity
 	int32_t vy;			// y velocity
   status_t life;         // dead/alive
-	int jumpmin;
-	int jumpmax;
-};
-typedef struct sprite sprite_t;
+}; typedef struct sprite sprite_t;
+
+struct platform{
+	int32_t x;      // x coordinate
+  int32_t y;      // y coordinate
+	const uint16_t *image; // ptr->image
+	int32_t w,h;
+	int32_t vx;			// x velocity
+	int32_t vy;			// y velocity
+  status_t life;         // dead/alive
+	int movex; //blue platforms
+	int initialx;
+}; typedef struct platform platform;
 
 #define MAXGREENPLATFORMS 5
 #define MAXBLUEPLATFORMS 2
@@ -51,20 +60,24 @@ typedef struct sprite sprite_t;
 #define MAXBLUENEMIES 2
 #define MAXWIDTH 128
 #define MAXHEIGHT 160
+#define PLATFORMSPEED 1
 
 sprite_t doodler;
-sprite_t greenplatform[MAXGREENPLATFORMS];
-sprite_t blueplatform[MAXBLUEPLATFORMS];
 sprite_t redenemy[MAXREDENEMIES];
 sprite_t blueenemy[MAXBLUENEMIES];
+platform greenplatform[MAXGREENPLATFORMS];
+platform blueplatform[MAXBLUEPLATFORMS];
 
 
 int pauseState;
 int fireState;
 
 int score = 0; //global score displayed at top left corner of screen
+uint32_t Data;
+
 uint32_t time = 0;
 volatile uint32_t flag;
+volatile uint32_t slideflag;
 
 void delay100ms(uint32_t count);
 void delay10ms(uint32_t count);
@@ -82,11 +95,13 @@ void Init(void){
 	doodler.vy = 1; //(Random()%3);	// 0 to 2
 	doodler.life = alive;
 	
-	int gap = MAXHEIGHT/(MAXGREENPLATFORMS + MAXBLUEPLATFORMS);
+	int gapgreen = MAXHEIGHT/(MAXGREENPLATFORMS);
+	int gapblue = MAXHEIGHT/(MAXBLUEPLATFORMS);
+
 	
 	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
 		greenplatform[i].x = Random()%MAXWIDTH;
-		greenplatform[i].y = MAXHEIGHT - i*gap;
+		greenplatform[i].y = MAXHEIGHT - i*gapgreen;
 		greenplatform[i].image = green_platform_sprite;
 		greenplatform[i].w = 30;
 		greenplatform[i].h = 11;
@@ -98,17 +113,8 @@ void Init(void){
 	
 	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
 		blueplatform[i].x = Random()%MAXWIDTH;
-		blueplatform[i].y = MAXHEIGHT - i*gap;
-		
-//		for(int j = 0; j < MAXGREENPLATFORMS; j++){
-//			if(blueplatform[i].y != greenplatform[j].y){
-//				blueplatform[i].y = MAXHEIGHT - i*gap;
-//			} else{
-//			blueplatform[i].x = 999; //send blue platform off the screen so its not visible - do not want green and blue platforms on top of each other
-//			}
-//		}
-		
-		
+		blueplatform[i].initialx = blueplatform[i].x;
+		blueplatform[i].y = MAXHEIGHT - i*gapblue;
 		blueplatform[i].image = blue_platform_sprite;
 		blueplatform[i].w = 31;
 		blueplatform[i].h = 11;
@@ -137,24 +143,20 @@ void Draw(void) {
 	ST7735_DrawBitmap(doodler.x, doodler.y, doodler.image, doodler.w, doodler.h);
 	
 	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
-		if(greenplatform[i].life == alive) {
-			if(doodler.y <= greenplatform[i].y + greenplatform[i].h){
-				greenplatform[i].y -= (doodler.y - greenplatform[i].y);
-			} 
 			ST7735_DrawBitmap(greenplatform[i].x, greenplatform[i].y, greenplatform[i].image, greenplatform[i].w, greenplatform[i].h);
-		}
 	}
 	
 	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
-		if(blueplatform[i].life == alive) {
-			if(doodler.y <= blueplatform[i].y + blueplatform[i].h){
-				blueplatform[i].y -= (doodler.y - blueplatform[i].y);
-			} 
-			ST7735_DrawBitmap(blueplatform[i].x, blueplatform[i].y, blueplatform[i].image, blueplatform[i].w, blueplatform[i].h);
+		blueplatform[i].x += blueplatform[i].vx;
+		if(blueplatform[i].initialx - blueplatform[i].x == 0){
+			blueplatform[i].vx *= -1;
 		}
+		if(blueplatform[i].x == blueplatform[i].initialx){
+			blueplatform[i].vx *= -1;
+		}
+		ST7735_DrawBitmap(blueplatform[i].x, blueplatform[i].y, blueplatform[i].image, blueplatform[i].w, blueplatform[i].h);
 	}
 
-	
 	
 	if(doodler.x <= 0) doodler.x = MAXWIDTH;
 	if(doodler.x > MAXWIDTH) doodler.x = 0;
@@ -165,7 +167,7 @@ void Draw(void) {
 				int minX = greenplatform[i].x - doodler.w;
         int maxX = greenplatform[i].x + greenplatform[i].w;
 				if (doodler.x >= minX && doodler.x <= maxX) {
-					doodler.vx *= -1;
+					score += 160 - greenplatform[i].y;
 		}
 	}
 }
@@ -175,7 +177,7 @@ void Draw(void) {
 				int minX = blueplatform[i].x - doodler.w;
         int maxX = blueplatform[i].x + blueplatform[i].w;
 				if (doodler.x >= minX && doodler.x <= maxX) {
-          score += doodler.y;
+          score += 160 - blueplatform[i].y;
         }
 		}
 	}
@@ -196,7 +198,7 @@ int main(void){
   Random_Init(1);
   ADC_Init(); 
 	ST7735_InitR(INITR_REDTAB);
-  Timer0_Init(Draw,1200000); // 50 Hz, calls draw to update screen  !!!originally was (Draw,800000) == 50 Hz
+  Timer0_Init(Draw,800000); // 50 Hz, calls draw to update screen  !!!originally was (Draw,800000) == 50 Hz
   Timer1_Init(clock,80000000); // 1 Hz
 	SysTick_Init(4000000);
 	Init();
@@ -241,28 +243,34 @@ int main(void){
 	
 	EnableInterrupts();
   while(1){
+		my.Sync();
+		while(slideflag == 1){
+			doodler.x = (120*Data/4095);
+			slideflag = 0;
+		}
+		
 		
 		while(doodler.life == alive){
-		//Draw();
-		doodler.y -= doodler.vy;
-		if (doodler.y >= 120){
-			doodler.vy *= -1;
-		}
-		if(doodler.y <= 160){
-			doodler.vy *= -1;
-		}
-		delay1ms(1);
+		
+//		doodler.y -= doodler.vy;
+//		if (doodler.y >= 120){
+//			doodler.vy *= -1;
+//		}
+//		if(doodler.y <= 160){
+//			doodler.vy *= -1;
+//		}
+//		delay1ms(1);
 
 	}
 	
 	if(doodler.life == dead){
 		ST7735_FillScreen(0x0000);            // set screen to black
 		ST7735_SetCursor(1, 1);
-		ST7735_OutString((char*)"GAME OVER");
-		ST7735_SetCursor(1, 2);
-		ST7735_SetTextColor(ST7735_WHITE);
+		ST7735_FillScreen(0xFFFF);
+		ST7735_DrawBitmap(10, 40, gameover, 100, 34);
+		ST7735_SetCursor(3, 8);
 		ST7735_OutString((char*)"Score: ");
-		ST7735_SetCursor(1, 3);
+		ST7735_SetCursor(4, 8);
 		ST7735_OutUDec(score);
 	}
 
@@ -274,14 +282,13 @@ int main(void){
 
 }
 
-int Data; //test
 void SysTick_Handler(void){ // every sample
     //*** students write this ******
 // toggle heartbeat LED (change from 0 to 1, or from 1 to 0)
 	//GPIO_PORTF_DATA_R ^= 0x04;
 // sample the ADC calling ADC_In()
 	Data = ADC_In();
-	flag = 1;
+	slideflag = 1;
 // save the 12-bit ADC sample using the member function Sensor.Save()
 	my.Save(Data);
 }
