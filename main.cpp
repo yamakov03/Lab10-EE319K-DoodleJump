@@ -7,11 +7,14 @@
 #include "PLL.h"
 #include "SlidePot.h"
 #include "Images.h"
+#include "Images2.h"
 #include "UART.h"
 #include "Timer0.h"
 #include "Timer1.h"
 #include "TExaS.h"
 #include "gameEngine.h"
+
+#include "math.h"
 
 SlidePot my(1500,0);
 extern "C" void DisableInterrupts(void);
@@ -31,7 +34,7 @@ void SysTick_Init(uint32_t period){
 // Creating a struct for the Sprite.
 typedef enum {dead, alive, dying} status_t;
 
-//-------------------------------doodler--------------------------
+//========================================the structs===========================================
 struct sprite{
 	int32_t oldx;
 	int32_t oldy;
@@ -45,6 +48,8 @@ struct sprite{
 }; typedef struct sprite sprite_t;
 
 struct platform{
+	int32_t oldx;
+	int32_t oldy;
 	int32_t x;      // x coordinate
   int32_t y;      // y coordinate
 	const uint16_t *image; // ptr->image
@@ -58,7 +63,7 @@ struct platform{
 #define MAXBLUEPLATFORMS 2
 #define MAXREDENEMIES 2
 #define MAXBLUENEMIES 2
-#define MAXWIDTH 128
+#define MAXWIDTH 100 // 128 is actual width, make smaller so platforms aren't cut off
 #define MAXHEIGHT 160
 #define PLATFORMSPEED 1
 
@@ -83,7 +88,7 @@ volatile uint32_t slideflag;
 void delay100ms(uint32_t count);
 void delay10ms(uint32_t count);
 void delay1ms(uint32_t count);
-//==================================================initialization=========================================
+//=========================================initialization=========================================
 void Init(void){ 
 	int i;
 	
@@ -92,11 +97,10 @@ void Init(void){
 	doodler.image = doodler_sprite;
 	doodler.w = 23;
 	doodler.h = 22;
-	doodler.vx = 0; //(Random()%5)-2;	// -2 to 2
-	doodler.vy = 1; //(Random()%3);	// 0 to 2
+	doodler.vx = 0; 
+	doodler.vy = 1; 
 	doodler.life = alive;
 
-	
 	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
 		greenplatform[i].x = Random()%MAXWIDTH;
 		greenplatform[i].y = Random()%MAXHEIGHT;
@@ -127,56 +131,13 @@ void Init(void){
 	
 }
 
-//===========================================handle screen updates=========================================================
-void Draw(void) {
-	
-	flag = 1; // semaphore
-	
-	ST7735_SetCursor(0, 0);
-	ST7735_OutUDec(score);
-	
-
-	ST7735_DrawBitmap(doodler.oldx, doodler.oldy, white, doodler.w, doodler.h);
-	ST7735_DrawBitmap(doodler.x, doodler.y, doodler.image, doodler.w, doodler.h);
-	
-	
-	
-
-	
-	if(doodler.x <= 0) doodler.x = MAXWIDTH;
-	if(doodler.x > MAXWIDTH) doodler.x = 0;
-	
-	//collision logic
-	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
-		if (doodler.y <= greenplatform[i].y + greenplatform[i].h) {
-				int minX = greenplatform[i].x - doodler.w;
-        int maxX = greenplatform[i].x + greenplatform[i].w;
-				if (doodler.x >= minX && doodler.x <= maxX) {
-
-		}
-	}
-}
-		
-	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
-		if (doodler.y <= blueplatform[i].y + blueplatform[i].h) {
-				int minX = blueplatform[i].x - doodler.w;
-        int maxX = blueplatform[i].x + blueplatform[i].w;
-				if (doodler.x >= minX && doodler.x <= maxX) {
-					nolongerstart = 1;
-        }
-		}
-	}
-}
-	//fix doodle translate issues
-//===============================================================================================
-
 void clock(void){
   time++;
 }
 
-float globaldx = 0, globaldy = 0;
-int globalx = 50, globaly = 121, globalh = 60;
-int oldx, oldy;
+int height = 121; 
+int oldx;
+int oldy;
 
 int main(void){
 	
@@ -187,13 +148,13 @@ int main(void){
   ADC_Init(); 
 	ST7735_InitR(INITR_REDTAB);
   //Timer0_Init(Draw,800000); // 50 Hz, calls draw to update screen  !!!originally was (Draw,800000) == 50 Hz
-  //Timer1_Init(clock,80000000); // 1 Hz
+  //Timer1_Init(clock,8000000); // 1 Hz
 	SysTick_Init(4000000);
 	Init();
 	PortF_Init();
 	PortE_Init();
 	PortB_Init();		
-//==========================start screen============================================================
+//====================================================start screen================================
 	ST7735_FillScreen(0xFFFF);
 	ST7735_DrawBitmap(10, 40, titlelogo, 104, 26);
 	ST7735_SetCursor(3, 14);
@@ -217,60 +178,95 @@ int main(void){
 			doodler.vy *= -1;
 		}
 		
-		delay1ms(1);
+		delay10ms(1);
 	
 	ST7735_DrawBitmap(50, doodler.y, doodler.image, 23, 22);
 			fireState ^= ((GPIO_PORTE_DATA_R & 0x02) >> 1);
 			pauseState ^= ((GPIO_PORTE_DATA_R & 0x01));
 	}
-//===========================================================================================
+//=======================================main loop====================================================
 	ST7735_FillScreen(0xFFFF); 
 	EnableInterrupts();
-	
+
   while(1){
 		while(doodler.life == alive){
+			
+			//get old x and old y values, slidepot interrupt
 				my.Sync();
-				oldx = globalx;
-				oldy = globaly;
+				doodler.oldx = doodler.x;
+				doodler.oldy = height;
+			
 				while(slideflag == 1){
-					globalx = (120*Data/4095);
+					doodler.x = (120*Data/4095);
 					slideflag = 0;
 				}
-		
-				globaldy += 0.2;
-				globaly -= globaldy;
-				if(globaly < 120) {
-					globaldy = 1;
-				}
+
+				ST7735_SetCursor(0, 0);
+				ST7735_OutUDec(score);
+				ST7735_SetCursor(0, 1);
+				ST7735_OutUDec(time);
 				
-				for(int i = 0; i<MAXBLUEPLATFORMS; i++){
-					if (doodler.y <= blueplatform[i].y + blueplatform[i].h) {
-						int minX = blueplatform[i].x - doodler.w;
-						int maxX = blueplatform[i].x + blueplatform[i].w;
-						if (doodler.x >= minX && doodler.x <= maxX) {
-							globaldy = -1;
-						}
-					}
-				}
-				
-				if(globaly<globalh){
+				//implement bounce here
+				//change velocity of character while also updating the global dy value that moves all sprtes
+					
+					
+				//if doodler height is greater than some global y height, flip and update platforms
+				if(){
 					for(int i = 0; i < MAXBLUEPLATFORMS; i++){
-						globaly=globalh;
-						blueplatform[i].y = blueplatform[i].y - globaldy;
-						if(blueplatform[i].y > 160){
+						blueplatform[i].oldy = blueplatform[i].y;
+						blueplatform[i].y = blueplatform[i].y - 1; //something here
+						
+						//if hits bottom, respawn
+						if(blueplatform[i].y > 181){
 							blueplatform[i].y = 0;
 							blueplatform[i].x = Random()%MAXWIDTH;
+						
+						}
+					}
+					for(int i = 0; i < MAXGREENPLATFORMS; i++){
+						greenplatform[i].oldy = greenplatform[i].y;
+						greenplatform[i].oldx = greenplatform[i].x;
+						greenplatform[i].y = greenplatform[i].y - 1; //something here
+						
+						//if hits bottom, respawn
+						if(greenplatform[i].y > 181){
+							greenplatform[i].y = 0;
+							greenplatform[i].x = Random()%MAXWIDTH;
 						
 						}
 					}
 					
 				}
 				
+				
+				//manage character collisions with blue/green platforms
+				for(int i = 0; i<MAXBLUEPLATFORMS; i++){
+					if (doodler.y <= blueplatform[i].y - blueplatform[i].h) {
+						int min = blueplatform[i].x;
+						int max = blueplatform[i].x + blueplatform[i].w;
+						if (doodler.x >= min && doodler.x <= max) {
+
+						}
+					}
+				}
+				
+				for(int i = 0; i<MAXGREENPLATFORMS; i++){
+					if (doodler.y <= greenplatform[i].y - greenplatform[i].h) {
+						int min = greenplatform[i].x;
+						int max = greenplatform[i].x + greenplatform[i].w;
+						if (doodler.x >= min && doodler.x <= max) {
+						}
+					}
+				}
+				
+				//draw platforms
 				for(int i = 0; i < MAXGREENPLATFORMS; i++) {
+					ST7735_DrawBitmap(greenplatform[i].oldx, greenplatform[i].oldy, clearedplatform, greenplatform[i].w, greenplatform[i].h);
 					ST7735_DrawBitmap(greenplatform[i].x, greenplatform[i].y, greenplatform[i].image, greenplatform[i].w, greenplatform[i].h);
 				}
 	
 				for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
+					blueplatform[i].oldx = blueplatform[i].x;
 					blueplatform[i].x += blueplatform[i].vx;
 					if(blueplatform[i].x == 100){
 						blueplatform[i].vx *= -1;
@@ -278,14 +274,16 @@ int main(void){
 					if(blueplatform[i].x == 0){
 						blueplatform[i].vx *= -1;
 					}
+					ST7735_DrawBitmap(blueplatform[i].oldx, blueplatform[i].oldy, clearedplatform, blueplatform[i].w, blueplatform[i].h);
 					ST7735_DrawBitmap(blueplatform[i].x, blueplatform[i].y, blueplatform[i].image, blueplatform[i].w, blueplatform[i].h);
 				}
 				
-					doodler.y = globaly;
-					doodler.x = globalx;
+					doodler.y = height;
 				
-					ST7735_DrawBitmap(oldx, oldy, white, doodler.w, doodler.h);
+					ST7735_DrawBitmap(doodler.oldx, doodler.oldy, white, doodler.w, doodler.h);
 					ST7735_DrawBitmap(doodler.x, doodler.y, doodler.image, doodler.w, doodler.h);
+				
+					
 				
 //		if((GPIO_PORTE_DATA_R & 0x01) == 1){
 //				delay10ms(1);
@@ -306,7 +304,7 @@ int main(void){
 //			}
 		}
 	}
-	
+//======================================end screen=====================================
 	if(doodler.life == dead && nolongerstart == 1){
 		ST7735_FillScreen(0x0000);            // set screen to black
 		ST7735_SetCursor(1, 1);
@@ -332,27 +330,9 @@ void SysTick_Handler(void){ // every sample
 	my.Save(Data);
 }
 
-void delay100ms(uint32_t count){uint32_t volatile time;
-  while(count>0){
-    time = 727240;  // 1sec at 80 MHz
-    while(time){
-	  	time--;
-    }
-    count--;
-  }
-}
 void delay10ms(uint32_t count){uint32_t volatile time;
   while(count>0){
     time = 72724;  // 0.1sec at 80 MHz
-    while(time){
-	  	time--;
-    }
-    count--;
-  }
-}
-void delay1ms(uint32_t count){uint32_t volatile time;
-  while(count>0){
-    time = 7272;  // 0.01sec at 80 MHz
     while(time){
 	  	time--;
     }
