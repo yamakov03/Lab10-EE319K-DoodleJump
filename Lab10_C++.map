@@ -19,7 +19,7 @@ Section Cross References
     startup_tm4c123.o(.text) refers to startup_tm4c123.o(HEAP) for Heap_Mem
     startup_tm4c123.o(.text) refers to startup_tm4c123.o(STACK) for Stack_Mem
     main.o(.text) refers to random.o(.text) for Random()
-    main.o(.text) refers to st7735.o(.text) for ST7735_SetCursor(unsigned, unsigned)
+    main.o(.text) refers to st7735.o(.text) for ST7735_DrawBitmap(short, short, const unsigned short*, short, short)
     main.o(.text) refers to main.o(.bss) for doodler
     main.o(.text) refers to main.o(.constdata) for doodler_sprite
     main.o(.text) refers to main.o(.data) for changey
@@ -855,21 +855,21 @@ Image component sizes
 
          0          0          0          0          0       1232   dac.o
        178          0          0          0          0       1524   fifo.o
-       264         30          0          0          0       1275   gameengine.o
-      1972        220      19778         36        444      11101   main.o
-       124          4          0          0          0        459   pll.o
+       264         30          0          0          0       1283   gameengine.o
+      1972        220      19778         36        444      11105   main.o
+       124          4          0          0          0        463   pll.o
        268          0          0          0          0        428   print.o
-        64         12          0          4          0        878   random.o
-       340         26          0          0          0       3766   slidepot.o
-      4260        228       2114         44         12      16472   st7735.o
+        64         12          0          4          0        882   random.o
+       340         26          0          0          0       3770   slidepot.o
+      4260        228       2114         44         12      16476   st7735.o
        296         22        620          0       2048       5604   startup_tm4c123.o
        512         56          0          0          0       1521   texas.o
-       112         22          0          4          0       1206   timer0.o
-       112         22          0          4          0       1206   timer1.o
-       536         42          4          8         40       2722   uart.o
+       112         22          0          4          0       1210   timer0.o
+       112         22          0          4          0       1210   timer1.o
+       536         42          4          8         40       2730   uart.o
 
     ----------------------------------------------------------------------
-      9040        684      22548        100       2544      49394   Object Totals
+      9040        684      22548        100       2544      49438   Object Totals
          0          0         32          0          0          0   (incl. Generated)
          2          0          0          0          0          0   (incl. Padding)
 
@@ -919,8 +919,8 @@ Image component sizes
 
       Code (inc. data)   RO Data    RW Data    ZI Data      Debug   
 
-      9360        710      22548        100       2644      48650   Grand Totals
-      9360        710      22548        100       2644      48650   ELF Image Totals
+      9360        710      22548        100       2644      48694   Grand Totals
+      9360        710      22548        100       2644      48694   ELF Image Totals
       9360        710      22548        100          0          0   ROM Totals
 
 ==============================================================================

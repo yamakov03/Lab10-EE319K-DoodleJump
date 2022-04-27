@@ -95,32 +95,26 @@ void Init(void){
 	doodler.vx = 0; //(Random()%5)-2;	// -2 to 2
 	doodler.vy = 1; //(Random()%3);	// 0 to 2
 	doodler.life = alive;
-	
-	int gapgreen = MAXHEIGHT/(MAXGREENPLATFORMS);
-	int gapblue = MAXHEIGHT/(MAXBLUEPLATFORMS);
 
 	
 	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
 		greenplatform[i].x = Random()%MAXWIDTH;
-		greenplatform[i].y = MAXHEIGHT - i*gapgreen;
+		greenplatform[i].y = Random()%MAXHEIGHT;
 		greenplatform[i].image = green_platform_sprite;
 		greenplatform[i].w = 30;
 		greenplatform[i].h = 11;
 		greenplatform[i].vx = 0; //green platforms don't move
-		greenplatform[i].vy = 0; 
-		greenplatform[i].life = alive;
-		
+		greenplatform[i].vy = 0; 	
 	}
 	
 	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
 		blueplatform[i].x = Random()%MAXWIDTH;
-		blueplatform[i].y = MAXHEIGHT - i*gapblue;
+		blueplatform[i].y = Random()%MAXHEIGHT;
 		blueplatform[i].image = blue_platform_sprite;
 		blueplatform[i].w = 31;
 		blueplatform[i].h = 11;
 		blueplatform[i].vx = 1; 
 		blueplatform[i].vy = 0; 
-		blueplatform[i].life = alive;
 	}
 	
 	for(int i = 0; i < MAXREDENEMIES; i++) {
@@ -134,46 +128,19 @@ void Init(void){
 }
 
 //===========================================handle screen updates=========================================================
-int changey;
-
-void updatesprites(){
-	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
-		greenplatform[i].y += changey;
-		}
-	
-	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
-		blueplatform[i].y += changey;
-	}
-}
 void Draw(void) {
+	
 	flag = 1; // semaphore
 	
 	ST7735_SetCursor(0, 0);
 	ST7735_OutUDec(score);
-	ST7735_SetCursor(0, 1);
-	ST7735_OutUDec(time);
-	while(slideflag == 1){
-				doodler.x = (120*Data/4095);
-				slideflag = 0;
-	}
 	
+
 	ST7735_DrawBitmap(doodler.oldx, doodler.oldy, white, doodler.w, doodler.h);
 	ST7735_DrawBitmap(doodler.x, doodler.y, doodler.image, doodler.w, doodler.h);
 	
-	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
-			ST7735_DrawBitmap(greenplatform[i].x, greenplatform[i].y, greenplatform[i].image, greenplatform[i].w, greenplatform[i].h);
-	}
 	
-	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
-		blueplatform[i].x += blueplatform[i].vx;
-		if(blueplatform[i].x == 120){
-			blueplatform[i].vx *= -1;
-		}
-		if(blueplatform[i].x == 0){
-			blueplatform[i].vx *= -1;
-		}
-		ST7735_DrawBitmap(blueplatform[i].x, blueplatform[i].y, blueplatform[i].image, blueplatform[i].w, blueplatform[i].h);
-	}
+	
 
 	
 	if(doodler.x <= 0) doodler.x = MAXWIDTH;
@@ -185,10 +152,7 @@ void Draw(void) {
 				int minX = greenplatform[i].x - doodler.w;
         int maxX = greenplatform[i].x + greenplatform[i].w;
 				if (doodler.x >= minX && doodler.x <= maxX) {
-					score += 160 - greenplatform[i].y;
-					changey = 160 - greenplatform[i].y;
-					nolongerstart = 1;
-					updatesprites();
+
 		}
 	}
 }
@@ -198,17 +162,10 @@ void Draw(void) {
 				int minX = blueplatform[i].x - doodler.w;
         int maxX = blueplatform[i].x + blueplatform[i].w;
 				if (doodler.x >= minX && doodler.x <= maxX) {
-          score += 160 - blueplatform[i].y;
-					changey = 160 - greenplatform[i].y;
 					nolongerstart = 1;
-					updatesprites();
         }
 		}
 	}
-	
-	//for(int i = 0; i < MAXBLUEPLATFORMS; i++){
-	//check if .y > 160
-	//if it is, set y to 0, and randomize the x coord.
 }
 	//fix doodle translate issues
 //===============================================================================================
@@ -216,6 +173,10 @@ void Draw(void) {
 void clock(void){
   time++;
 }
+
+float globaldx = 0, globaldy = 0;
+int globalx = 50, globaly = 121, globalh = 60;
+int oldx, oldy;
 
 int main(void){
 	
@@ -225,8 +186,8 @@ int main(void){
   Random_Init(1);
   ADC_Init(); 
 	ST7735_InitR(INITR_REDTAB);
-  Timer0_Init(Draw,800000); // 50 Hz, calls draw to update screen  !!!originally was (Draw,800000) == 50 Hz
-  Timer1_Init(clock,80000000); // 1 Hz
+  //Timer0_Init(Draw,800000); // 50 Hz, calls draw to update screen  !!!originally was (Draw,800000) == 50 Hz
+  //Timer1_Init(clock,80000000); // 1 Hz
 	SysTick_Init(4000000);
 	Init();
 	PortF_Init();
@@ -264,51 +225,85 @@ int main(void){
 	}
 //===========================================================================================
 	ST7735_FillScreen(0xFFFF); 
-	doodler.y = 160;
-	doodler.x = 50;
-	
-	
 	EnableInterrupts();
+	
   while(1){
-		my.Sync();
-
-		
-		
 		while(doodler.life == alive){
-		
-		doodler.oldx = doodler.x;	
-		doodler.oldy = doodler.y;
-		doodler.y -= doodler.vy;
-		if (doodler.y >= 120){
-			doodler.vy *= -1;
-		}
-		if(doodler.y <= 160){
-			doodler.vy *= -1;
-		}
-		delay1ms(1);
-		
-//		if(doodler.y > 150){
-//			doodler.life = dead;
-//		}
-		
-//===========================================pause screen=============================================
-		if((GPIO_PORTE_DATA_R & 0x01) == 1){
-				delay10ms(1);
-				DisableInterrupts();
-				ST7735_FillScreen(0xFFFF);
-				ST7735_DrawBitmap(25, 100, pause, 70, 30);
-				ST7735_SetCursor(4, 11);
-				ST7735_OutString("Press pause");
-				ST7735_SetCursor(4, 12);
-				ST7735_OutString("button to");
-				ST7735_SetCursor(4, 13);
-				ST7735_OutString("unpause");
-				while((GPIO_PORTE_DATA_R & 0x01) != 1){
-				delay10ms(1);
+				my.Sync();
+				oldx = globalx;
+				oldy = globaly;
+				while(slideflag == 1){
+					globalx = (120*Data/4095);
+					slideflag = 0;
 				}
-			ST7735_FillScreen(0xFFFF);
-			EnableInterrupts();
-			}
+		
+				globaldy += 0.2;
+				globaly -= globaldy;
+				if(globaly < 120) {
+					globaldy = 1;
+				}
+				
+				for(int i = 0; i<MAXBLUEPLATFORMS; i++){
+					if (doodler.y <= blueplatform[i].y + blueplatform[i].h) {
+						int minX = blueplatform[i].x - doodler.w;
+						int maxX = blueplatform[i].x + blueplatform[i].w;
+						if (doodler.x >= minX && doodler.x <= maxX) {
+							globaldy = -1;
+						}
+					}
+				}
+				
+				if(globaly<globalh){
+					for(int i = 0; i < MAXBLUEPLATFORMS; i++){
+						globaly=globalh;
+						blueplatform[i].y = blueplatform[i].y - globaldy;
+						if(blueplatform[i].y > 160){
+							blueplatform[i].y = 0;
+							blueplatform[i].x = Random()%MAXWIDTH;
+						
+						}
+					}
+					
+				}
+				
+				for(int i = 0; i < MAXGREENPLATFORMS; i++) {
+					ST7735_DrawBitmap(greenplatform[i].x, greenplatform[i].y, greenplatform[i].image, greenplatform[i].w, greenplatform[i].h);
+				}
+	
+				for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
+					blueplatform[i].x += blueplatform[i].vx;
+					if(blueplatform[i].x == 100){
+						blueplatform[i].vx *= -1;
+					}
+					if(blueplatform[i].x == 0){
+						blueplatform[i].vx *= -1;
+					}
+					ST7735_DrawBitmap(blueplatform[i].x, blueplatform[i].y, blueplatform[i].image, blueplatform[i].w, blueplatform[i].h);
+				}
+				
+					doodler.y = globaly;
+					doodler.x = globalx;
+				
+					ST7735_DrawBitmap(oldx, oldy, white, doodler.w, doodler.h);
+					ST7735_DrawBitmap(doodler.x, doodler.y, doodler.image, doodler.w, doodler.h);
+				
+//		if((GPIO_PORTE_DATA_R & 0x01) == 1){
+//				delay10ms(1);
+//				DisableInterrupts();
+//				ST7735_FillScreen(0xFFFF);
+//				ST7735_DrawBitmap(25, 100, pause, 70, 30);
+//				ST7735_SetCursor(4, 11);
+//				ST7735_OutString("Press pause");
+//				ST7735_SetCursor(4, 12);
+//				ST7735_OutString("button to");
+//				ST7735_SetCursor(4, 13);
+//				ST7735_OutString("unpause");
+//				while((GPIO_PORTE_DATA_R & 0x01) != 1){
+//				delay10ms(1);
+//				}
+//			ST7735_FillScreen(0xFFFF);
+//			EnableInterrupts();
+//			}
 		}
 	}
 	
