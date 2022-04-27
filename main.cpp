@@ -68,14 +68,12 @@ sprite_t blueenemy[MAXBLUENEMIES];
 platform greenplatform[MAXGREENPLATFORMS];
 platform blueplatform[MAXBLUEPLATFORMS];
 
-
 int pauseState;
 int fireState;
 int nolongerstart = 0;
 
 int score = 0; //global score displayed at top left corner of screen
 uint32_t Data;
-
 uint32_t time = 0;
 volatile uint32_t flag;
 volatile uint32_t slideflag;
@@ -84,9 +82,7 @@ void delay100ms(uint32_t count);
 void delay10ms(uint32_t count);
 void delay1ms(uint32_t count);
 //==================================================initialization=========================================
-void Init(void){ 
-	int i;
-	
+void Init(void){ 	
 	doodler.x = 50;
 	doodler.y = 80;
 	doodler.image = doodler_sprite;
@@ -96,7 +92,6 @@ void Init(void){
 	doodler.vy = 1; //(Random()%3);	// 0 to 2
 	doodler.life = alive;
 
-	
 	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
 		greenplatform[i].x = Random()%MAXWIDTH;
 		greenplatform[i].y = Random()%MAXHEIGHT;
@@ -118,55 +113,46 @@ void Init(void){
 	}
 	
 	for(int i = 0; i < MAXREDENEMIES; i++) {
-		redenemy[i].life = alive;
+		redenemy[i].life = dead;
 	}
 	
 	for(int i = 0; i < MAXBLUENEMIES; i++) {
-		blueenemy[i].life = alive;
+		blueenemy[i].life = dead;
 	}
-	
 }
 
 //===========================================handle screen updates=========================================================
-void Draw(void) {
-	
-	flag = 1; // semaphore
-	
-	ST7735_SetCursor(0, 0);
-	ST7735_OutUDec(score);
-	
-
-	ST7735_DrawBitmap(doodler.oldx, doodler.oldy, white, doodler.w, doodler.h);
-	ST7735_DrawBitmap(doodler.x, doodler.y, doodler.image, doodler.w, doodler.h);
-	
-	
-	
-
-	
-	if(doodler.x <= 0) doodler.x = MAXWIDTH;
-	if(doodler.x > MAXWIDTH) doodler.x = 0;
-	
-	//collision logic
-	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
-		if (doodler.y <= greenplatform[i].y + greenplatform[i].h) {
-				int minX = greenplatform[i].x - doodler.w;
-        int maxX = greenplatform[i].x + greenplatform[i].w;
-				if (doodler.x >= minX && doodler.x <= maxX) {
-
-		}
-	}
-}
-		
-	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
-		if (doodler.y <= blueplatform[i].y + blueplatform[i].h) {
-				int minX = blueplatform[i].x - doodler.w;
-        int maxX = blueplatform[i].x + blueplatform[i].w;
-				if (doodler.x >= minX && doodler.x <= maxX) {
-					nolongerstart = 1;
-        }
-		}
-	}
-}
+//void Draw(void) {
+//	flag = 1; // semaphore
+//	ST7735_SetCursor(0, 0);
+//	ST7735_OutUDec(score);
+//	ST7735_DrawBitmap(doodler.oldx, doodler.oldy, white, doodler.w, doodler.h);
+//	ST7735_DrawBitmap(doodler.x, doodler.y, doodler.image, doodler.w, doodler.h);
+//	
+//	if(doodler.x <= 0) doodler.x = MAXWIDTH;
+//	if(doodler.x > MAXWIDTH) doodler.x = 0;
+//	
+//	//collision logic
+//	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
+//		if (doodler.y <= greenplatform[i].y + greenplatform[i].h) {
+//			int minX = greenplatform[i].x - doodler.w;
+//			int maxX = greenplatform[i].x + greenplatform[i].w;
+//			if (doodler.x >= minX && doodler.x <= maxX) {
+//				nolongerstart = 1;
+//			}
+//		}
+//	}
+//		
+//	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
+//		if (doodler.y <= blueplatform[i].y + blueplatform[i].h) {
+//			int minX = blueplatform[i].x - doodler.w;
+//			int maxX = blueplatform[i].x + blueplatform[i].w;
+//			if (doodler.x >= minX && doodler.x <= maxX) {
+//				nolongerstart = 1;
+//			}
+//		}
+//	}
+//}
 	//fix doodle translate issues
 //===============================================================================================
 
@@ -179,7 +165,6 @@ int globalx = 50, globaly = 121, globalh = 60;
 int oldx, oldy;
 
 int main(void){
-	
 	DisableInterrupts();
   PLL_Init(Bus80MHz);       // Bus clock is 80 MHz 
   TExaS_Init();
@@ -193,7 +178,9 @@ int main(void){
 	PortF_Init();
 	PortE_Init();
 	PortB_Init();		
+	
 //==========================start screen============================================================
+	
 	ST7735_FillScreen(0xFFFF);
 	ST7735_DrawBitmap(10, 40, titlelogo, 104, 26);
 	ST7735_SetCursor(3, 14);
@@ -209,19 +196,16 @@ int main(void){
 	
 	while(fireState != 1 && pauseState != 1){
 		doodler.y -= doodler.vy;
-		
 		if (doodler.y <=80){
 			doodler.vy *= -1;
 		}
 		if(doodler.y >= 121){
 			doodler.vy *= -1;
 		}
-		
-		delay1ms(1);
-	
-	ST7735_DrawBitmap(50, doodler.y, doodler.image, 23, 22);
-			fireState ^= ((GPIO_PORTE_DATA_R & 0x02) >> 1);
-			pauseState ^= ((GPIO_PORTE_DATA_R & 0x01));
+		delay1ms(5);
+		ST7735_DrawBitmap(50, doodler.y, doodler.image, 23, 22);
+		fireState ^= ((GPIO_PORTE_DATA_R & 0x02) >> 1);
+		pauseState ^= ((GPIO_PORTE_DATA_R & 0x01));
 	}
 //===========================================================================================
 	ST7735_FillScreen(0xFFFF); 
@@ -229,63 +213,61 @@ int main(void){
 	
   while(1){
 		while(doodler.life == alive){
-				my.Sync();
-				oldx = globalx;
-				oldy = globaly;
-				while(slideflag == 1){
-					globalx = (120*Data/4095);
-					slideflag = 0;
-				}
-		
-				globaldy += 0.2;
-				globaly -= globaldy;
-				if(globaly < 120) {
-					globaldy = 1;
-				}
-				
-				for(int i = 0; i<MAXBLUEPLATFORMS; i++){
-					if (doodler.y <= blueplatform[i].y + blueplatform[i].h) {
-						int minX = blueplatform[i].x - doodler.w;
-						int maxX = blueplatform[i].x + blueplatform[i].w;
-						if (doodler.x >= minX && doodler.x <= maxX) {
-							globaldy = -1;
-						}
-					}
-				}
-				
-				if(globaly<globalh){
-					for(int i = 0; i < MAXBLUEPLATFORMS; i++){
-						globaly=globalh;
-						blueplatform[i].y = blueplatform[i].y - globaldy;
-						if(blueplatform[i].y > 160){
-							blueplatform[i].y = 0;
-							blueplatform[i].x = Random()%MAXWIDTH;
-						
-						}
-					}
-					
-				}
-				
-				for(int i = 0; i < MAXGREENPLATFORMS; i++) {
-					ST7735_DrawBitmap(greenplatform[i].x, greenplatform[i].y, greenplatform[i].image, greenplatform[i].w, greenplatform[i].h);
-				}
+			my.Sync();
+			oldx = globalx;
+			oldy = globaly;
+			while(slideflag == 1){
+				globalx = (120*Data/4095);
+				slideflag = 0;
+			}
 	
-				for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
-					blueplatform[i].x += blueplatform[i].vx;
-					if(blueplatform[i].x == 100){
-						blueplatform[i].vx *= -1;
+			globaldy += 0.2;
+			globaly -= globaldy;
+			if(globaly < 120) {
+				globaldy = 1;
+			}
+			
+			for(int i = 0; i<MAXBLUEPLATFORMS; i++){
+				if (doodler.y <= blueplatform[i].y + blueplatform[i].h) {
+					int minX = blueplatform[i].x - doodler.w;
+					int maxX = blueplatform[i].x + blueplatform[i].w;
+					if (doodler.x >= minX && doodler.x <= maxX) {
+						globaldy = -1;
 					}
-					if(blueplatform[i].x == 0){
-						blueplatform[i].vx *= -1;
-					}
-					ST7735_DrawBitmap(blueplatform[i].x, blueplatform[i].y, blueplatform[i].image, blueplatform[i].w, blueplatform[i].h);
 				}
+			}
 				
-					doodler.y = globaly;
-					doodler.x = globalx;
+			if(globaly<globalh){
+				for(int i = 0; i < MAXBLUEPLATFORMS; i++){
+					globaly=globalh;
+					blueplatform[i].y = blueplatform[i].y - globaldy;
+					if(blueplatform[i].y > 160){
+						blueplatform[i].y = 0;
+						blueplatform[i].x = Random()%MAXWIDTH;
+					}
+				}
+			}
 				
-					ST7735_DrawBitmap(oldx, oldy, white, doodler.w, doodler.h);
-					ST7735_DrawBitmap(doodler.x, doodler.y, doodler.image, doodler.w, doodler.h);
+			for(int i = 0; i < MAXGREENPLATFORMS; i++) {
+				ST7735_DrawBitmap(greenplatform[i].x, greenplatform[i].y, greenplatform[i].image, greenplatform[i].w, greenplatform[i].h);
+			}
+	
+			for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
+				blueplatform[i].x += blueplatform[i].vx;
+				if(blueplatform[i].x == 100){
+					blueplatform[i].vx *= -1;
+				}
+				if(blueplatform[i].x == 0){
+					blueplatform[i].vx *= -1;
+				}
+				ST7735_DrawBitmap(blueplatform[i].x, blueplatform[i].y, blueplatform[i].image, blueplatform[i].w, blueplatform[i].h);
+			}
+			
+			doodler.y = globaly;
+			doodler.x = globalx;
+		
+			ST7735_DrawBitmap(oldx, oldy, white, doodler.w, doodler.h);
+			ST7735_DrawBitmap(doodler.x, doodler.y, doodler.image, doodler.w, doodler.h);
 				
 //		if((GPIO_PORTE_DATA_R & 0x01) == 1){
 //				delay10ms(1);
@@ -305,26 +287,24 @@ int main(void){
 //			EnableInterrupts();
 //			}
 		}
-	}
 	
-	if(doodler.life == dead && nolongerstart == 1){
-		ST7735_FillScreen(0x0000);            // set screen to black
-		ST7735_SetCursor(1, 1);
-		ST7735_FillScreen(0xFFFF);
-		ST7735_DrawBitmap(10, 40, gameover, 100, 34);
-		ST7735_SetCursor(3, 8);
-		ST7735_OutString((char*)"Score: ");
-		ST7735_SetCursor(4, 8);
-		ST7735_OutUDec(score);
+		if(doodler.life == dead && nolongerstart == 1){
+			ST7735_FillScreen(0x0000);            // set screen to black
+			ST7735_SetCursor(1, 1);
+			ST7735_FillScreen(0xFFFF);
+			ST7735_DrawBitmap(10, 40, gameover, 100, 34);
+			ST7735_SetCursor(3, 8);
+			ST7735_OutString((char*)"Score: ");
+			ST7735_SetCursor(4, 8);
+			ST7735_OutUDec(score);
+		}
+
+		while(flag==0){};
+		flag = 0;
+		ST7735_SetCursor(2, 4);
+		ST7735_OutUDec(time);
 	}
-
-    while(flag==0){};
-    flag = 0;
-    ST7735_SetCursor(2, 4);
-    ST7735_OutUDec(time);
-  }
-
-
+}
 
 void SysTick_Handler(void){ // every sample
 	Data = ADC_In();
@@ -341,6 +321,7 @@ void delay100ms(uint32_t count){uint32_t volatile time;
     count--;
   }
 }
+
 void delay10ms(uint32_t count){uint32_t volatile time;
   while(count>0){
     time = 72724;  // 0.1sec at 80 MHz
@@ -350,6 +331,7 @@ void delay10ms(uint32_t count){uint32_t volatile time;
     count--;
   }
 }
+
 void delay1ms(uint32_t count){uint32_t volatile time;
   while(count>0){
     time = 7272;  // 0.01sec at 80 MHz
