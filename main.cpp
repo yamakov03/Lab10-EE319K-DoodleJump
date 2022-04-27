@@ -291,6 +291,7 @@ int main(void){
 //			doodler.life = dead;
 //		}
 		
+//===========================================pause screen=============================================
 		if((GPIO_PORTE_DATA_R & 0x01) == 1){
 				delay10ms(1);
 				DisableInterrupts();
