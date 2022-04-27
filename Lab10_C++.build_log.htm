@@ -33,8 +33,8 @@ compiling random.cpp...
 compiling main.cpp...
 main.cpp(88): warning:  #177-D: variable "i"  was declared but never referenced
   	int i;
-main.cpp(291): warning:  #174-D: expression has no effect
-  			doodler.life == dead;
+main.cpp(314): warning:  #111-D: statement is unreachable
+  	if(doodler.life == dead && nolongerstart == 1){
 main.cpp: 2 warnings, 0 errors
 compiling PLL.cpp...
 compiling Sound.cpp...
@@ -65,7 +65,7 @@ compiling UART.cpp...
 compiling TExaS.cpp...
 compiling gameEngine.cpp...
 linking...
-Program Size: Code=9356 RO-data=18348 RW-data=100 ZI-data=2644  
+Program Size: Code=9360 RO-data=22548 RW-data=100 ZI-data=2644  
 ".\Lab10_C++.axf" - 0 Error(s), 10 Warning(s).
 
 <h2>Software Packages used:</h2>
@@ -89,7 +89,7 @@ Package Vendor: Keil
 <h2>Collection of Component Files used:</h2>
 
    * Component: ARM::CMSIS:CORE:5.5.0
-Build Time Elapsed:  00:00:02
+Build Time Elapsed:  00:00:03
 </pre>
 </body>
 </html>
