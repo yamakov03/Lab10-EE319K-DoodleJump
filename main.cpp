@@ -287,14 +287,28 @@ int main(void){
 		}
 		delay1ms(1);
 		
-		if(doodler.y > 150){
-			doodler.life == dead;
-		}
-
-		while(pauseState == 1){
+//		if(doodler.y > 150){
+//			doodler.life = dead;
+//		}
 		
+		if((GPIO_PORTE_DATA_R & 0x01) == 1){
+				delay10ms(1);
+				DisableInterrupts();
+				ST7735_FillScreen(0xFFFF);
+				ST7735_DrawBitmap(25, 100, pause, 70, 30);
+				ST7735_SetCursor(4, 11);
+				ST7735_OutString("Press pause");
+				ST7735_SetCursor(4, 12);
+				ST7735_OutString("button to");
+				ST7735_SetCursor(4, 13);
+				ST7735_OutString("unpause");
+				while((GPIO_PORTE_DATA_R & 0x01) != 1){
+				delay10ms(1);
+				}
+			ST7735_FillScreen(0xFFFF);
+			EnableInterrupts();
+			}
 		}
-			
 	}
 	
 	if(doodler.life == dead && nolongerstart == 1){
@@ -314,7 +328,7 @@ int main(void){
     ST7735_OutUDec(time);
   }
 
-}
+
 
 void SysTick_Handler(void){ // every sample
 	Data = ADC_In();
