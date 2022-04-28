@@ -39,11 +39,11 @@ struct sprite{
 	int32_t oldx;
 	int32_t oldy;
   int32_t x;      // x coordinate
-  int32_t y;      // y coordinate
+  float y;      // y coordinate
 	const uint16_t *image; // ptr->image
 	int32_t w,h;
 	int32_t vx;			// x velocity
-	int32_t vy;			// y velocity
+	float vy;			// y velocity
   status_t life;         // dead/alive
 }; typedef struct sprite sprite_t;
 
@@ -187,103 +187,92 @@ int main(void){
 	ST7735_FillScreen(0xFFFF); 
 	EnableInterrupts();
 
-																																								int jumph = 40;
-																																								int globalheight = 110;
-																																								int globalvy = 3;
-																																								doodler.vy = globalvy; //doodler speed
-																																								doodler.y = globalheight - 10;
-																																								int platformdy = doodler.vy;
+																			int jumph = 80;
+																			int globalheight = 120;
+																			int globalvy = 3;
+																			doodler.vy = 0; //doodler speed
+																			doodler.y = 160;
+																			score = 0;
 	
-
+	//!! 	COORDINATES START AT BOTTOM LEFT CORNER OF PICTURE
 	//global score = globalheight - newplatform.y
 
   while(1){
 		while(doodler.life == alive){
 			
-			//get old x and old y values, slidepot interrupt
+			//slidepot
 				my.Sync();
 				doodler.oldx = doodler.x;
-			
 				while(slideflag == 1){
 					doodler.x = (120*Data/4095);
 					slideflag = 0;
 				}
-																							//  ||
-				ST7735_SetCursor(0, 0);							//--------------max jump
-				ST7735_OutUDec(score);							///------------140 GLOBAL HEIGHT
-				ST7735_SetCursor(0, 1);             
-				ST7735_OutUDec(time);
+			
+			//display score
+				ST7735_SetCursor(0, 0);					
+				ST7735_OutUDec(score);						
+
 				
-				//implement bounce here
-				//change velocity of character while also updating the global dy value that moves all sprtes
-				
+			//move the doodler
 				doodler.oldy = doodler.y;
-				doodler.y -= doodler.vy;
-				
-				if(doodler.y < globalheight - jumph){
-					doodler.vy *= -1;
+				doodler.vy += 1;
+				doodler.y += doodler.vy;		
+				if(doodler.y > 160){
+					doodler.vy = -10;
 				}
-				if(doodler.y > globalheight){  // going up 
-					doodler.vy *= -1;
-				}	
 				
-				//manage character collisions with blue/green platforms
+			//manage platform collisions
 				for(int i = 0; i<MAXBLUEPLATFORMS; i++){
-					if (doodler.y <= blueplatform[i].y - blueplatform[i].h) {
+					if ((doodler.y > blueplatform[i].y - 20 && doodler.y <= blueplatform[i].y) && doodler.vy > 0 ) {
 						int min = blueplatform[i].x;
 						int max = blueplatform[i].x + blueplatform[i].w;
-						if (doodler.x >= min && doodler.x <= max) {
-							doodler.vy *= -1;
+						if (doodler.x + doodler.w/2 >= min && doodler.x + doodler.w/2 <= max ){
+							doodler.vy = -10;
 						}
 					}
 				}
-				
 				for(int i = 0; i<MAXGREENPLATFORMS; i++){
-					if (doodler.y <= greenplatform[i].y - greenplatform[i].h) {
+					if ((doodler.y > blueplatform[i].y - 20 && doodler.y <= greenplatform[i].y) && doodler.vy > 0) {
 						int min = greenplatform[i].x;
 						int max = greenplatform[i].x + greenplatform[i].w;
-						if (doodler.x >= min && doodler.x <= max) {
-							doodler.vy *= -1;
+						if (doodler.x + doodler.w/2 >= min && doodler.x + doodler.w/2 <= max) {
+							doodler.vy = -10;
 						}
 					}
 				}
 				
-			  //     ----   platform
-				//---------   global
-				//			
-				//----------  bottom
-				
-				//if doodler height is greater than some global y height, flip and update platforms //updates platform locations
+			//update platform x and y
 				if(doodler.y < globalheight){
+					
+					
+					score++;
 					for(int i = 0; i < MAXBLUEPLATFORMS; i++){
 						blueplatform[i].oldy = blueplatform[i].y;
-						blueplatform[i].y += globalvy; //something here
-						
-						//if hits bottom, respawn
+						blueplatform[i].oldx = blueplatform[i].x;
+						if(doodler.vy < 0){
+							blueplatform[i].y -= doodler.vy;
+						}
 						if(blueplatform[i].y > 181){
 							blueplatform[i].y = 0;
 							blueplatform[i].x = Random()%MAXWIDTH;
 						}
 					}
+					
 					for(int i = 0; i < MAXGREENPLATFORMS; i++){
 						greenplatform[i].oldy = greenplatform[i].y;
 						greenplatform[i].oldx = greenplatform[i].x;
-						greenplatform[i].y += globalvy; //something here
-						
-						//if hits bottom, respawn
+						if(doodler.vy < 0){
+							greenplatform[i].y -= doodler.vy;
+						}
 						if(greenplatform[i].y > 181){
 							greenplatform[i].y = 0;
 							greenplatform[i].x = Random()%MAXWIDTH;
-						
 						}
-					}
+					}	
 					
 				}
 				
-				
-				
-				
-				//draw platforms
+				//draw sprites
 				for(int i = 0; i < MAXGREENPLATFORMS; i++) {
 					ST7735_DrawBitmap(greenplatform[i].oldx, greenplatform[i].oldy, clearedplatform, greenplatform[i].w, greenplatform[i].h);
 					ST7735_DrawBitmap(greenplatform[i].x, greenplatform[i].y, greenplatform[i].image, greenplatform[i].w, greenplatform[i].h);
@@ -300,7 +289,7 @@ int main(void){
 					}
 					ST7735_DrawBitmap(blueplatform[i].oldx, blueplatform[i].oldy, clearedplatform, blueplatform[i].w, blueplatform[i].h);
 					ST7735_DrawBitmap(blueplatform[i].x, blueplatform[i].y, blueplatform[i].image, blueplatform[i].w, blueplatform[i].h);
-				}
+					}
 				
 					ST7735_DrawBitmap(doodler.oldx, doodler.oldy, white, doodler.w, doodler.h);
 					ST7735_DrawBitmap(doodler.x, doodler.y, doodler.image, doodler.w, doodler.h);
@@ -325,7 +314,7 @@ int main(void){
 //			EnableInterrupts();
 //			}
 		}
-	}
+		
 //======================================end screen=====================================
 	if(doodler.life == dead && nolongerstart == 1){
 		ST7735_FillScreen(0x0000);            // set screen to black
@@ -342,7 +331,8 @@ int main(void){
     flag = 0;
     ST7735_SetCursor(2, 4);
     ST7735_OutUDec(time);
-  }
+ }
+}
 
 
 
