@@ -8,8 +8,10 @@
 .\main.o: PLL.h
 .\main.o: SlidePot.h
 .\main.o: Images.h
+.\main.o: Images2.h
 .\main.o: UART.h
 .\main.o: Timer0.h
 .\main.o: Timer1.h
 .\main.o: TExaS.h
 .\main.o: gameEngine.h
+.\main.o: D:\Keil ARM\ARM\ARMCC\Bin\..\include\math.h

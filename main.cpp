@@ -135,7 +135,7 @@ void clock(void){
   time++;
 }
 
-int height = 121; 
+int height = 121;
 int oldx;
 int oldy;
 
@@ -209,9 +209,8 @@ int main(void){
 				//implement bounce here
 				//change velocity of character while also updating the global dy value that moves all sprtes
 					
-					
 				//if doodler height is greater than some global y height, flip and update platforms
-				if(){
+				if(1){
 					for(int i = 0; i < MAXBLUEPLATFORMS; i++){
 						blueplatform[i].oldy = blueplatform[i].y;
 						blueplatform[i].y = blueplatform[i].y - 1; //something here
