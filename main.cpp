@@ -85,9 +85,8 @@ uint32_t time = 0;
 volatile uint32_t flag;
 volatile uint32_t slideflag;
 
-void delay100ms(uint32_t count);
+void delay5ms(uint32_t count);
 void delay10ms(uint32_t count);
-void delay1ms(uint32_t count);
 //=========================================initialization=========================================
 void Init(void){ 
 	int i;
@@ -135,7 +134,7 @@ void clock(void){
   time++;
 }
 
-int height = 121;
+int height = 121; 
 int oldx;
 int oldy;
 
@@ -171,8 +170,8 @@ int main(void){
 	while(fireState != 1 && pauseState != 1){
 		doodler.y -= doodler.vy;
 		
-		if (doodler.y <=80){
-			doodler.vy *= -1;
+		if (doodler.y <=80){    //--------80
+			doodler.vy *= -1;			//--------121
 		}
 		if(doodler.y >= 121){
 			doodler.vy *= -1;
@@ -188,44 +187,88 @@ int main(void){
 	ST7735_FillScreen(0xFFFF); 
 	EnableInterrupts();
 
+																																								int jumph = 40;
+																																								int globalheight = 110;
+																																								int globalvy = 3;
+																																								doodler.vy = globalvy; //doodler speed
+																																								doodler.y = globalheight - 10;
+																																								int platformdy = doodler.vy;
+	
+
+	//global score = globalheight - newplatform.y
+
   while(1){
 		while(doodler.life == alive){
 			
 			//get old x and old y values, slidepot interrupt
 				my.Sync();
 				doodler.oldx = doodler.x;
-				doodler.oldy = height;
 			
 				while(slideflag == 1){
 					doodler.x = (120*Data/4095);
 					slideflag = 0;
 				}
-
-				ST7735_SetCursor(0, 0);
-				ST7735_OutUDec(score);
-				ST7735_SetCursor(0, 1);
+																							//  ||
+				ST7735_SetCursor(0, 0);							//--------------max jump
+				ST7735_OutUDec(score);							///------------140 GLOBAL HEIGHT
+				ST7735_SetCursor(0, 1);             
 				ST7735_OutUDec(time);
 				
 				//implement bounce here
 				//change velocity of character while also updating the global dy value that moves all sprtes
-					
-				//if doodler height is greater than some global y height, flip and update platforms
-				if(1){
+				
+				doodler.oldy = doodler.y;
+				doodler.y -= doodler.vy;
+				
+				if(doodler.y < globalheight - jumph){
+					doodler.vy *= -1;
+				}
+				if(doodler.y > globalheight){  // going up 
+					doodler.vy *= -1;
+				}	
+				
+				//manage character collisions with blue/green platforms
+				for(int i = 0; i<MAXBLUEPLATFORMS; i++){
+					if (doodler.y <= blueplatform[i].y - blueplatform[i].h) {
+						int min = blueplatform[i].x;
+						int max = blueplatform[i].x + blueplatform[i].w;
+						if (doodler.x >= min && doodler.x <= max) {
+							doodler.vy *= -1;
+						}
+					}
+				}
+				
+				for(int i = 0; i<MAXGREENPLATFORMS; i++){
+					if (doodler.y <= greenplatform[i].y - greenplatform[i].h) {
+						int min = greenplatform[i].x;
+						int max = greenplatform[i].x + greenplatform[i].w;
+						if (doodler.x >= min && doodler.x <= max) {
+							doodler.vy *= -1;
+						}
+					}
+				}
+				
+			  //     ----   platform
+				//---------   global
+				//			
+				//----------  bottom
+				
+				//if doodler height is greater than some global y height, flip and update platforms //updates platform locations
+				if(doodler.y < globalheight){
 					for(int i = 0; i < MAXBLUEPLATFORMS; i++){
 						blueplatform[i].oldy = blueplatform[i].y;
-						blueplatform[i].y = blueplatform[i].y - 1; //something here
+						blueplatform[i].y += globalvy; //something here
 						
 						//if hits bottom, respawn
 						if(blueplatform[i].y > 181){
 							blueplatform[i].y = 0;
 							blueplatform[i].x = Random()%MAXWIDTH;
-						
 						}
 					}
 					for(int i = 0; i < MAXGREENPLATFORMS; i++){
 						greenplatform[i].oldy = greenplatform[i].y;
 						greenplatform[i].oldx = greenplatform[i].x;
-						greenplatform[i].y = greenplatform[i].y - 1; //something here
+						greenplatform[i].y += globalvy; //something here
 						
 						//if hits bottom, respawn
 						if(greenplatform[i].y > 181){
@@ -238,25 +281,7 @@ int main(void){
 				}
 				
 				
-				//manage character collisions with blue/green platforms
-				for(int i = 0; i<MAXBLUEPLATFORMS; i++){
-					if (doodler.y <= blueplatform[i].y - blueplatform[i].h) {
-						int min = blueplatform[i].x;
-						int max = blueplatform[i].x + blueplatform[i].w;
-						if (doodler.x >= min && doodler.x <= max) {
-
-						}
-					}
-				}
 				
-				for(int i = 0; i<MAXGREENPLATFORMS; i++){
-					if (doodler.y <= greenplatform[i].y - greenplatform[i].h) {
-						int min = greenplatform[i].x;
-						int max = greenplatform[i].x + greenplatform[i].w;
-						if (doodler.x >= min && doodler.x <= max) {
-						}
-					}
-				}
 				
 				//draw platforms
 				for(int i = 0; i < MAXGREENPLATFORMS; i++) {
@@ -276,8 +301,6 @@ int main(void){
 					ST7735_DrawBitmap(blueplatform[i].oldx, blueplatform[i].oldy, clearedplatform, blueplatform[i].w, blueplatform[i].h);
 					ST7735_DrawBitmap(blueplatform[i].x, blueplatform[i].y, blueplatform[i].image, blueplatform[i].w, blueplatform[i].h);
 				}
-				
-					doodler.y = height;
 				
 					ST7735_DrawBitmap(doodler.oldx, doodler.oldy, white, doodler.w, doodler.h);
 					ST7735_DrawBitmap(doodler.x, doodler.y, doodler.image, doodler.w, doodler.h);
@@ -332,6 +355,16 @@ void SysTick_Handler(void){ // every sample
 void delay10ms(uint32_t count){uint32_t volatile time;
   while(count>0){
     time = 72724;  // 0.1sec at 80 MHz
+    while(time){
+	  	time--;
+    }
+    count--;
+  }
+}
+
+void delay5ms(uint32_t count){uint32_t volatile time;
+  while(count>0){
+    time = 72724/2;  // 0.1sec at 80 MHz
     while(time){
 	  	time--;
     }
