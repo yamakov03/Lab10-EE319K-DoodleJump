@@ -162,7 +162,7 @@ int main(void){
   ADC_Init(); 
 	ST7735_InitR(INITR_REDTAB);
   //Timer0_Init(Draw,800000); // 50 Hz, calls draw to update screen  !!!originally was (Draw,800000) == 50 Hz
-  Timer1_Init(clock,10000000); // 1 Hz
+  Timer1_Init(clock,16000000); // 1 Hz
 	SysTick_Init(4000000);
 	Init();
 	PortF_Init();
@@ -192,7 +192,7 @@ int main(void){
 			doodler.vy *= -1;
 		}
 		
-		delay10ms(1);
+		delay5ms(1);
 	
 	ST7735_DrawBitmap(50, doodler.y, doodler.image, 23, 22);
 			fireState ^= ((GPIO_PORTE_DATA_R & 0x02) >> 1);
@@ -212,6 +212,7 @@ void game(){
 					score = 0;
 					sprite_t peashot;
 					int dy = -10;
+					int gamestarted = 0;
 	
 	//!! 	COORDINATES START AT BOTTOM LEFT CORNER OF PICTURE
 
@@ -241,6 +242,7 @@ void game(){
 						int max = blueplatform[i].x + blueplatform[i].w;
 						if (doodler.x + doodler.w/2 >= min && doodler.x + doodler.w/2 <= max ){
 							doodler.vy = dy;
+							gamestarted = 1;
 						}
 					}
 				}
@@ -252,6 +254,7 @@ void game(){
 						int max = greenplatform[i].x + greenplatform[i].w;
 						if (doodler.x + doodler.w/2 >= min && doodler.x + doodler.w/2 <= max) {
 							doodler.vy = dy;
+							gamestarted = 1;
 						}
 					}
 				}
@@ -306,82 +309,101 @@ void game(){
 					ST7735_DrawBitmap(blueplatform[i].x, blueplatform[i].y, blueplatform[i].image, blueplatform[i].w, blueplatform[i].h);
 				}
 				
-					//draw doodler
+				//draw doodler
+				if(doodler.y > 160 && gamestarted == 1) {
+					doodler.life = dead;
+				}
 				
-//				if(doodler.y > 160) {
-//					doodler.life = dead;
-//				}
 				ST7735_DrawBitmap(doodler.oldx, doodler.oldy, white, doodler.w, doodler.h);
 				ST7735_DrawBitmap(doodler.x, doodler.y, doodler.image, doodler.w, doodler.h);
 				doodler.oldx = doodler.x;
 				doodler.oldy = doodler.y;
 				
 					//draw enemies
-//					for(int i = 0; i < MAXREDENEMIES; i++){
-//						redenemy[i].oldy = redenemy[i].y;
-//						redenemy[i].oldx = redenemy[i].x;
-//						if(doodler.vy < 0){
-//							redenemy[i].y -= doodler.vy;
-//						}
-//						if(redenemy[i].y > 181){
-//							redenemy[i].y = 0;
-//							redenemy[i].x = Random()%MAXWIDTH;
-//						}
-//						ST7735_DrawBitmap(redenemy[i].x, redenemy[i].y, redenemy[i].image, redenemy[i].w, redenemy[i].h);
-//					}	
-//					
-//					for(int i = 0; i < MAXBLUENEMIES; i++){
-//						blueenemy[i].oldy = blueenemy[i].y;
-//						blueenemy[i].oldx = blueenemy[i].x;
-//						if(doodler.vy < 0){
-//							blueenemy[i].y -= doodler.vy;
-//						}
-//						if(redenemy[i].y > 181){
-//							blueenemy[i].y = 0;
-//							blueenemy[i].x = Random()%MAXWIDTH;
-//						}
-//						ST7735_DrawBitmap(blueenemy[i].x, blueenemy[i].y, blueenemy[i].image, blueenemy[i].w, blueenemy[i].h);
-//					}
-				
+				if(doodler.y < globalheight){
+					for(int i = 0; i < MAXREDENEMIES; i++){
+						redenemy[i].oldy = redenemy[i].y;
+						redenemy[i].oldx = redenemy[i].x;
+						if(doodler.vy < 0){
+							redenemy[i].y -= doodler.vy;
+						}
+						if(redenemy[i].y > 181){
+							redenemy[i].y = 0;
+							redenemy[i].x = Random()%MAXWIDTH;
+						}
+					}	
 					
+					for(int i = 0; i < MAXBLUENEMIES; i++){
+						blueenemy[i].oldy = blueenemy[i].y;
+						blueenemy[i].oldx = blueenemy[i].x;
+						if(doodler.vy < 0){
+							blueenemy[i].y -= doodler.vy;
+						}
+						if(redenemy[i].y > 181){
+							blueenemy[i].y = 0;
+							blueenemy[i].x = Random()%MAXWIDTH;
+						}
+					}
+				}
 				
+				//draw enemies
+				for(int i = 0; i < MAXREDENEMIES; i++){
+						ST7735_DrawBitmap(redenemy[i].oldx, redenemy[i].oldy, redclear, redenemy[i].w, redenemy[i].h);
+						if(redenemy[i].life == alive){
+							ST7735_DrawBitmap(redenemy[i].x, redenemy[i].y, redenemy[i].image, redenemy[i].w, redenemy[i].h);
+						}
+					}	
+					
+					for(int i = 0; i < MAXBLUENEMIES; i++){
+						ST7735_DrawBitmap(blueenemy[i].oldx, blueenemy[i].oldy, blueclear, blueenemy[i].w, blueenemy[i].h);
+						if(blueenemy[i].life == alive){
+							ST7735_DrawBitmap(blueenemy[i].x, blueenemy[i].y, blueenemy[i].image, blueenemy[i].w, blueenemy[i].h);
+						}
+					}
+					
 					//peashot logic
 					if(peashot.life == alive){
+						peashot.oldy = peashot.y;
+						peashot.oldx = peashot.x;
 						peashot.y -= peashot.vy;
+						ST7735_DrawBitmap(peashot.oldx, peashot.oldy, peashotclear, 10, 10);
 						ST7735_DrawBitmap(peashot.x, peashot.y, peashot_sprite, 10, 10);
 					}
 					
-//					for(int i = 0; i < MAXREDENEMIES; i++){
-//						if((peashot.x > redenemy[i].x) && (peashot.x < redenemy[i].x + redenemy[i].w)){
-//							peashot.life = dead;
-//							redenemy[i].life = dead;
-//						}
-//						if ((doodler.y > redenemy[i].y - 20 && doodler.y <= redenemy[i].y)) {
-//							int min = redenemy[i].x;
-//							int max = redenemy[i].x + redenemy[i].w;
-//							if (doodler.x + doodler.w/2 > min && doodler.x + doodler.w/2 < max ){
-//								doodler.life = dead;
-//							}
-//						}
-//					}	
-//					
-//					for(int i = 0; i < MAXBLUENEMIES; i++){
-//						if((peashot.x > blueenemy[i].x) && (peashot.x < blueenemy[i].x + blueenemy[i].w)){
-//							peashot.life = dead;
-//							blueenemy[i].life = dead;
-//						}
-//						if ((doodler.y > blueenemy[i].y - 20 && doodler.y <= blueenemy[i].y)) {
-//							int min = blueenemy[i].x;
-//							int max = blueenemy[i].x + blueenemy[i].w;
-//							if (doodler.x + doodler.w/2 > min && doodler.x + doodler.w/2 < max ){
-//								doodler.life = dead;
-//							}
-//						}
-//					}
+					for(int i = 0; i < MAXREDENEMIES; i++){
+						if(((peashot.x + 5> redenemy[i].x) && (peashot.x + 5< redenemy[i].x + redenemy[i].w)) && peashot.y < redenemy[i].y){
+							peashot.life = dead;
+							redenemy[i].life = dead;
+							score += 10;
+						}
+						if ((doodler.y > redenemy[i].y - 20 && doodler.y <= redenemy[i].y)) {
+							int min = redenemy[i].x;
+							int max = redenemy[i].x + redenemy[i].w;
+							if (doodler.x + doodler.w/2 > min && doodler.x + doodler.w/2 < max ){
+								doodler.life = dead;
+							}
+						}
+					}	
+					
+					for(int i = 0; i < MAXBLUENEMIES; i++){
+						if(((peashot.x + 5> blueenemy[i].x) && (peashot.x + 5 < blueenemy[i].x + blueenemy[i].w)) && peashot.y < blueenemy[i].y){
+							peashot.life = dead;
+							blueenemy[i].life = dead;
+							score += 10;
+						}
+						if ((doodler.y > blueenemy[i].y - 20 && doodler.y <= blueenemy[i].y)) {
+							int min = blueenemy[i].x;
+							int max = blueenemy[i].x + blueenemy[i].w;
+							if (doodler.x + doodler.w/2 > min && doodler.x + doodler.w/2 < max ){
+								doodler.life = dead;
+							}
+						}
+					}
 					
 					//shoot the peashot
-					if((GPIO_PORTE_DATA_R & 0x02) == 1){
+					if((GPIO_PORTE_DATA_R & 0x02)>>1 == 1){
 						delay5ms(1);
+						ST7735_DrawBitmap(peashot.x, peashot.y, peashotclear, 10, 10);
 						peashot.life = alive;
 						peashot.y = doodler.y;
 						peashot.x = doodler.x;
@@ -401,8 +423,8 @@ void game(){
 					
 					//pause screen
 			if((GPIO_PORTE_DATA_R & 0x01) == 1){
+					DisableInterrupts();				
 					delay5ms(1);
-					DisableInterrupts();
 					ST7735_FillScreen(0xFFFF);
 					ST7735_SetCursor(4, 5);
 					ST7735_OutString("---PAUSED---");
@@ -426,6 +448,7 @@ void game(){
 		
 		//print end screen
 			if(doodler.life == dead){
+				DisableInterrupts();
 				ST7735_FillScreen(0xFFFF);
 				
 				ST7735_SetCursor(3, 5);
@@ -435,17 +458,18 @@ void game(){
 							ST7735_SetCursor(3, 8);
 							ST7735_OutUDec(score);
 							ST7735_SetCursor(3, 11);
-							ST7735_OutString("Press pause");
+							ST7735_OutString("Press any");
 							ST7735_SetCursor(3, 12);
 							ST7735_OutString("button to");
 							ST7735_SetCursor(3, 13);
 							ST7735_OutString("play again");
 				
-				while((GPIO_PORTE_DATA_R & 0x01) != 1){
+				while(((GPIO_PORTE_DATA_R & 0x01) != 1) && ((GPIO_PORTE_DATA_R & 0x02)>>1 != 1)){
 				delay10ms(1);
-					
 				}
 				doodler.life = alive;
+				Init();
+				EnableInterrupts();
 				game();
 			}
 		}
