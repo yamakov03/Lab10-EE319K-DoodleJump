@@ -54,9 +54,9 @@ struct platform{
   status_t life;         // dead/alive
 }; typedef struct platform platform;
 
-#define MAXGREENPLATFORMS 5
-#define MAXBLUEPLATFORMS 2
-#define MAXREDENEMIES 1
+#define MAXGREENPLATFORMS 4
+#define MAXBLUEPLATFORMS 3
+#define MAXREDENEMIES 2
 #define MAXBLUENEMIES 1
 #define MAXWIDTH 100 // 128 is actual width, make smaller so platforms aren't cut off
 #define MAXHEIGHT 160
@@ -94,9 +94,6 @@ void Init(void){
 	doodler.vx = 0; 
 	doodler.vy = 1; 
 	doodler.life = alive;
-	
-	int totalsprites = (MAXGREENPLATFORMS + MAXBLUEPLATFORMS + MAXBLUENEMIES + MAXREDENEMIES);
-	int location = MAXHEIGHT/totalsprites;
 	
 	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
 		greenplatform[i].x = Random()%MAXWIDTH;
@@ -142,18 +139,16 @@ void Init(void){
 	
 	int badcount = 0;
 	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
-		if(greenplatform[i].y < 120){
+		if(greenplatform[i].y < 130){
 			badcount++;
 		}
- 	
 	}
-	
 	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
-			if(greenplatform[i].y < 120){
+			if(greenplatform[i].y < 130){
 			badcount++;
 		}
 	}
-	if(badcount == MAXGREENPLATFORMS + MAXBLUEPLATFORMS){
+	if(badcount > 4){
 		Init();
 	}
 	
@@ -177,7 +172,7 @@ int main(void){
   ADC_Init(); 
 	ST7735_InitR(INITR_REDTAB);
   //Timer0_Init(Draw,800000); // 50 Hz, calls draw to update screen  !!!originally was (Draw,800000) == 50 Hz
-  Timer1_Init(clock,32000000); // 1 Hz
+  Timer1_Init(clock,64000000); // 1 Hz
 	SysTick_Init(4000000);
 	Init();
 	PortF_Init();
@@ -226,7 +221,7 @@ void game(){
 					
 					score = 0;
 					sprite_t peashot;
-					int vy = -10;
+					int vy = -11;
 					int gamestarted = 0;
 	
 	//!! 	COORDINATES START AT BOTTOM LEFT CORNER OF PICTURE
@@ -261,8 +256,6 @@ void game(){
 						}
 					}
 				}
-				
-				
 				for(int i = 0; i<MAXGREENPLATFORMS; i++){
 					if ((doodler.y > greenplatform[i].y - greenplatform[i].h && doodler.y <= greenplatform[i].y) && doodler.vy > 0) {
 						int min = greenplatform[i].x;
@@ -273,6 +266,30 @@ void game(){
 						}
 					}
 				}
+				//jumping on top of enemies
+				for(int i = 0; i<MAXREDENEMIES; i++){
+					if ((doodler.y > redenemy[i].y - redenemy[i].h && doodler.y <= redenemy[i].y) && doodler.vy > 0) {
+						int min = redenemy[i].x;
+						int max = redenemy[i].x + redenemy[i].w;
+						if (doodler.x + doodler.w/2 >= min && doodler.x + doodler.w/2 <= max) {
+							doodler.vy = vy;
+							gamestarted = 1;
+							redenemy[i].life = dead;
+						}
+					}
+				}
+				for(int i = 0; i<MAXBLUENEMIES; i++){
+					if ((doodler.y > blueenemy[i].y - blueenemy[i].h && doodler.y <= blueenemy[i].y) && doodler.vy > 0 ) {
+						int min = blueenemy[i].x;
+						int max = blueenemy[i].x + blueenemy[i].w;
+						if (doodler.x + doodler.w/2 >= min && doodler.x + doodler.w/2 <= max ){
+							doodler.vy = vy;
+							gamestarted = 1;
+							blueenemy[i].life = dead;
+						}
+					}
+				}
+				
 				
 				//peashot logic
 					if(peashot.life == alive){
@@ -289,7 +306,7 @@ void game(){
 							redenemy[i].life = dead;
 							score += 10;
 						}
-						if ((doodler.y > redenemy[i].y - 20 && doodler.y <= redenemy[i].y)) {
+						if ((doodler.y == redenemy[i].y) && doodler.vy < 0) {
 							int min = redenemy[i].x;
 							int max = redenemy[i].x + redenemy[i].w;
 							if (doodler.x + doodler.w/2 > min && doodler.x + doodler.w/2 < max ){
@@ -304,7 +321,7 @@ void game(){
 							blueenemy[i].life = dead;
 							score += 10;
 						}
-						if ((doodler.y > blueenemy[i].y - 20 && doodler.y <= blueenemy[i].y)) {
+						if ((doodler.y == blueenemy[i].y) && doodler.vy < 0) {
 							int min = blueenemy[i].x;
 							int max = blueenemy[i].x + blueenemy[i].w;
 							if (doodler.x + doodler.w/2 > min && doodler.x + doodler.w/2 < max ){
@@ -336,8 +353,8 @@ void game(){
 						if(doodler.vy < 0){
 							blueplatform[i].y -= vy - 1;
 						}
-						if(blueplatform[i].y > 181){
-							blueplatform[i].y = 40;
+						if(blueplatform[i].y > 165 + blueplatform[i].h){
+							blueplatform[i].y = 0;
 							blueplatform[i].x = Random()%MAXWIDTH;
 						}
 					}
@@ -348,8 +365,8 @@ void game(){
 						if(doodler.vy < 0){
 							greenplatform[i].y -= vy - 1;
 						}
-						if(greenplatform[i].y > 181){
-							greenplatform[i].y = 40;
+						if(greenplatform[i].y > 165 + greenplatform[i].h){
+							greenplatform[i].y = 0;
 							greenplatform[i].x = Random()%MAXWIDTH;
 						}
 					}	
@@ -360,8 +377,9 @@ void game(){
 						if(doodler.vy < 0){
 							redenemy[i].y  -= vy - 1;
 						}
-						if(redenemy[i].y > 181){
-							redenemy[i].y = 40;
+						if(redenemy[i].y > 160){
+							redenemy[i].life = alive;
+							redenemy[i].y = 0;
 							redenemy[i].x = Random()%MAXWIDTH;
 						}
 					}	
@@ -372,8 +390,9 @@ void game(){
 						if(doodler.vy < 0){
 							blueenemy[i].y  -= vy - 1;
 						}
-						if(redenemy[i].y > 181){
-							blueenemy[i].y = 40;
+						if(redenemy[i].y > 165 + blueenemy[i].h){
+							blueenemy[i].life = alive;
+							blueenemy[i].y = 0;
 							blueenemy[i].x = Random()%MAXWIDTH;
 						}
 					}
