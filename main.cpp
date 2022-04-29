@@ -162,7 +162,7 @@ int main(void){
   ADC_Init(); 
 	ST7735_InitR(INITR_REDTAB);
   //Timer0_Init(Draw,800000); // 50 Hz, calls draw to update screen  !!!originally was (Draw,800000) == 50 Hz
-  //Timer1_Init(clock,8000000); // 1 Hz
+  Timer1_Init(clock,10000000); // 1 Hz
 	SysTick_Init(4000000);
 	Init();
 	PortF_Init();
@@ -199,6 +199,7 @@ int main(void){
 			pauseState ^= ((GPIO_PORTE_DATA_R & 0x01));
 	}
 	ST7735_FillScreen(0xFFFF);
+	EnableInterrupts();
 	game();
 }
 //=======================================main loop====================================================
@@ -223,12 +224,7 @@ void game(){
 				while(slideflag == 1){
 					doodler.x = (120*Data/4095);
 					slideflag = 0;
-				}
-			
-			//display score
-				ST7735_SetCursor(0, 0);					
-				ST7735_OutUDec(score);						
-
+				}					
 				
 			//move the doodler
 				//doodler.oldy = doodler.y;
@@ -393,6 +389,16 @@ void game(){
 						peashot.vx = 0;
 					}
 				
+				//display score and time
+				ST7735_SetCursor(0, 0);					
+				ST7735_OutString("Score: ");
+				ST7735_SetCursor(7, 0);					
+				ST7735_OutUDec(score);		
+				ST7735_SetCursor(0, 1);					
+				ST7735_OutString("Time: ");				
+				ST7735_SetCursor(6, 1);					
+				ST7735_OutUDec(time);
+					
 					//pause screen
 			if((GPIO_PORTE_DATA_R & 0x01) == 1){
 					delay5ms(1);
