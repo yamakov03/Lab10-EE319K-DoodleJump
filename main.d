@@ -1,6 +1,6 @@
 .\main.o: main.cpp
-.\main.o: D:\Keil ARM\ARM\ARMCC\Bin\..\include\stdint.h
-.\main.o: D:\Keil ARM\ARM\ARMCC\Bin\..\include\stdio.h
+.\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
 .\main.o: ../inc/tm4c123gh6pm.h
 .\main.o: PLL.h
 .\main.o: ST7735.h

@@ -54,9 +54,9 @@ struct platform{
   status_t life;         // dead/alive
 }; typedef struct platform platform;
 
-#define MAXGREENPLATFORMS 4
+#define MAXGREENPLATFORMS 6
 #define MAXBLUEPLATFORMS 3
-#define MAXREDENEMIES 2
+#define MAXREDENEMIES 1
 #define MAXBLUENEMIES 1
 #define MAXWIDTH 100 // 128 is actual width, make smaller so platforms aren't cut off
 #define MAXHEIGHT 160
@@ -85,12 +85,11 @@ void delay10ms(uint32_t count);
 void delay50ms(uint32_t count);
 //=========================================initialization=========================================
 void Init(void){
-	int i;
 	doodler.x = 50;
 	doodler.y = 80;
 	doodler.image = doodler_sprite;
-	doodler.w = 23;
-	doodler.h = 22;
+	doodler.w = 19;
+	doodler.h = 18;
 	doodler.vx = 0; 
 	doodler.vy = 1; 
 	doodler.life = alive;
@@ -99,8 +98,8 @@ void Init(void){
 		greenplatform[i].x = Random()%MAXWIDTH;
 		greenplatform[i].y = Random()%MAXHEIGHT;
 		greenplatform[i].image = green_platform_sprite;
-		greenplatform[i].w = 30;
-		greenplatform[i].h = 11;
+		greenplatform[i].w = 26;
+		greenplatform[i].h = 7;
 		greenplatform[i].vx = 0; //green platforms don't move
 		greenplatform[i].vy = 0; 	
 	}
@@ -109,8 +108,8 @@ void Init(void){
 		blueplatform[i].x = Random()%MAXWIDTH;
 		blueplatform[i].y = Random()%MAXHEIGHT;
 		blueplatform[i].image = blue_platform_sprite;
-		blueplatform[i].w = 31;
-		blueplatform[i].h = 11;
+		blueplatform[i].w = 27;
+		blueplatform[i].h = 7;
 		blueplatform[i].vx = 1; 
 		blueplatform[i].vy = 0; 
 	}
@@ -120,8 +119,8 @@ void Init(void){
 		redenemy[i].x = Random()%MAXWIDTH;
 		redenemy[i].y = Random()%MAXHEIGHT;
 		redenemy[i].image = red_enemy_sprite;
-		redenemy[i].w = 21;
-		redenemy[i].h = 14;
+		redenemy[i].w = 17;
+		redenemy[i].h = 12;
 		redenemy[i].vx = 0; 
 		redenemy[i].vy = 0; 
 	}
@@ -131,8 +130,8 @@ void Init(void){
 		blueenemy[i].x = Random()%MAXWIDTH;
 		blueenemy[i].y = Random()%MAXHEIGHT;
 		blueenemy[i].image = blue_enemy_sprite;
-		blueenemy[i].w = 26;
-		blueenemy[i].h = 17;
+		blueenemy[i].w = 22;
+		blueenemy[i].h = 13;
 		blueenemy[i].vx = 0; 
 		blueenemy[i].vy = 0; 
 	}
@@ -185,7 +184,7 @@ int main(void){
 	ST7735_OutString("Press any button");
 	ST7735_SetCursor(4,15);
 	ST7735_OutString("to start game");
-	ST7735_DrawBitmap(50, 130, green_platform_sprite, 30, 11);
+	ST7735_DrawBitmap(50, 130, green_platform_sprite, greenplatform[0].w, greenplatform[0].h);
 	
 	fireState = 0;
 	pauseState = 0;
@@ -204,7 +203,10 @@ int main(void){
 		
 		delay5ms(1);
 	
-	ST7735_DrawBitmap(50, doodler.y, doodler.image, 23, 22);
+	ST7735_DrawBitmap(doodler.oldx, doodler.oldy, white, doodler.w, doodler.h);
+	ST7735_DrawBitmap(doodler.x, doodler.y, doodler.image, doodler.w, doodler.h);
+	doodler.oldx = doodler.x;
+	doodler.oldy = doodler.y;
 			fireState ^= ((GPIO_PORTE_DATA_R & 0x02) >> 1);
 			pauseState ^= ((GPIO_PORTE_DATA_R & 0x01));
 	}
@@ -221,7 +223,7 @@ void game(){
 					
 					score = 0;
 					sprite_t peashot;
-					int vy = -11;
+					int vy = -10;
 					int gamestarted = 0;
 	
 	//!! 	COORDINATES START AT BOTTOM LEFT CORNER OF PICTURE
@@ -344,14 +346,13 @@ void game(){
 				
 			//update sprite x and y
 				if(doodler.y < globalheight){
-					doodler.y -= vy -1;
+					doodler.y -= vy;
 					
 					score++;
 					for(int i = 0; i < MAXBLUEPLATFORMS; i++){
-						blueplatform[i].oldy = blueplatform[i].y;
-						blueplatform[i].oldx = blueplatform[i].x;
+						
 						if(doodler.vy < 0){
-							blueplatform[i].y -= vy - 1;
+							blueplatform[i].y -= vy-2;
 						}
 						if(blueplatform[i].y > 165 + blueplatform[i].h){
 							blueplatform[i].y = 0;
@@ -360,10 +361,8 @@ void game(){
 					}
 					
 					for(int i = 0; i < MAXGREENPLATFORMS; i++){
-						greenplatform[i].oldy = greenplatform[i].y;
-						greenplatform[i].oldx = greenplatform[i].x;
 						if(doodler.vy < 0){
-							greenplatform[i].y -= vy - 1;
+							greenplatform[i].y -= vy-2;
 						}
 						if(greenplatform[i].y > 165 + greenplatform[i].h){
 							greenplatform[i].y = 0;
@@ -372,10 +371,9 @@ void game(){
 					}	
 					
 					for(int i = 0; i < MAXREDENEMIES; i++){
-						redenemy[i].oldy = redenemy[i].y;
-						redenemy[i].oldx = redenemy[i].x;
+
 						if(doodler.vy < 0){
-							redenemy[i].y  -= vy - 1;
+							redenemy[i].y  -= vy-2;
 						}
 						if(redenemy[i].y > 160){
 							redenemy[i].life = alive;
@@ -385,10 +383,9 @@ void game(){
 					}	
 					
 					for(int i = 0; i < MAXBLUENEMIES; i++){
-						blueenemy[i].oldy = blueenemy[i].y;
-						blueenemy[i].oldx = blueenemy[i].x;
+
 						if(doodler.vy < 0){
-							blueenemy[i].y  -= vy - 1;
+							blueenemy[i].y  -= vy-2;
 						}
 						if(redenemy[i].y > 165 + blueenemy[i].h){
 							blueenemy[i].life = alive;
@@ -403,6 +400,9 @@ void game(){
 				for(int i = 0; i < MAXGREENPLATFORMS; i++) {
 					ST7735_DrawBitmap(greenplatform[i].oldx, greenplatform[i].oldy, clearedplatform, greenplatform[i].w, greenplatform[i].h);
 					ST7735_DrawBitmap(greenplatform[i].x, greenplatform[i].y, greenplatform[i].image, greenplatform[i].w, greenplatform[i].h);
+					greenplatform[i].oldy = greenplatform[i].y;
+					greenplatform[i].oldx = greenplatform[i].x;
+					
 				}
 	
 				for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
@@ -416,6 +416,8 @@ void game(){
 					}
 					ST7735_DrawBitmap(blueplatform[i].oldx, blueplatform[i].oldy, clearedplatform, blueplatform[i].w, blueplatform[i].h);
 					ST7735_DrawBitmap(blueplatform[i].x, blueplatform[i].y, blueplatform[i].image, blueplatform[i].w, blueplatform[i].h);
+					blueplatform[i].oldy = blueplatform[i].y;
+					blueplatform[i].oldx = blueplatform[i].x;
 				}
 				
 				
@@ -424,14 +426,21 @@ void game(){
 						ST7735_DrawBitmap(redenemy[i].oldx, redenemy[i].oldy, redclear, redenemy[i].w, redenemy[i].h);
 						if(redenemy[i].life == alive){
 							ST7735_DrawBitmap(redenemy[i].x, redenemy[i].y, redenemy[i].image, redenemy[i].w, redenemy[i].h);
+								redenemy[i].oldy = redenemy[i].y;
+								redenemy[i].oldx = redenemy[i].x;
+							
 						}
+						else {ST7735_DrawBitmap(redenemy[i].oldx, redenemy[i].oldy, redclear, redenemy[i].w, redenemy[i].h);}
 					}	
 					
 					for(int i = 0; i < MAXBLUENEMIES; i++){
 						ST7735_DrawBitmap(blueenemy[i].oldx, blueenemy[i].oldy, blueclear, blueenemy[i].w, blueenemy[i].h);
 						if(blueenemy[i].life == alive){
 							ST7735_DrawBitmap(blueenemy[i].x, blueenemy[i].y, blueenemy[i].image, blueenemy[i].w, blueenemy[i].h);
+								blueenemy[i].oldy = blueenemy[i].y;
+								blueenemy[i].oldx = blueenemy[i].x;
 						}
+						else {ST7735_DrawBitmap(blueenemy[i].oldx, blueenemy[i].oldy, blueclear, blueenemy[i].w, blueenemy[i].h);}
 					}
 
 				

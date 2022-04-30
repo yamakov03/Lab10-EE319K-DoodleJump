@@ -1,6 +1,6 @@
 .\gameengine.o: gameEngine.cpp
-.\gameengine.o: D:\Keil ARM\ARM\ARMCC\Bin\..\include\stdint.h
-.\gameengine.o: D:\Keil ARM\ARM\ARMCC\Bin\..\include\stdio.h
+.\gameengine.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\gameengine.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
 .\gameengine.o: ../inc/tm4c123gh6pm.h
 .\gameengine.o: PLL.h
 .\gameengine.o: ST7735.h
