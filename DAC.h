@@ -16,6 +16,6 @@ void DAC_Init(void);
 // Input: 6-bit data, 0 to 63 
 // Input=n is converted to n*3.3V/63
 // Output: none
-void DAC_Out(uint8_t data);
+void DAC_Out(uint32_t data);
 
 #endif

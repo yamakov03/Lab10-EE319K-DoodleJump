@@ -13,6 +13,7 @@
 #include "Timer1.h"
 #include "TExaS.h"
 #include "gameEngine.h"
+#include "Sound.h"
 
 SlidePot my(1500,0);
 extern "C" void DisableInterrupts(void);
@@ -54,7 +55,7 @@ struct platform{
   status_t life;         // dead/alive
 }; typedef struct platform platform;
 
-#define MAXGREENPLATFORMS 6
+#define MAXGREENPLATFORMS 5
 #define MAXBLUEPLATFORMS 3
 #define MAXREDENEMIES 1
 #define MAXBLUENEMIES 1
@@ -268,6 +269,7 @@ void game(){
 				doodler.vy += 1;
 				doodler.y += doodler.vy;		
 				if(doodler.y > 160){
+					playsound(jump);
 					doodler.vy = vy;
 				}
 				
@@ -277,6 +279,7 @@ void game(){
 						int min = blueplatform[i].x;
 						int max = blueplatform[i].x + blueplatform[i].w;
 						if (doodler.x + doodler.w/2 >= min && doodler.x + doodler.w/2 <= max ){
+							playsound(jump);
 							doodler.vy = vy;
 							gamestarted = 1;
 						}
@@ -287,6 +290,7 @@ void game(){
 						int min = greenplatform[i].x;
 						int max = greenplatform[i].x + greenplatform[i].w;
 						if (doodler.x + doodler.w/2 >= min && doodler.x + doodler.w/2 <= max) {
+							playsound(jump);
 							doodler.vy = vy;
 							gamestarted = 1;
 						}
@@ -298,6 +302,7 @@ void game(){
 						int min = redenemy[i].x;
 						int max = redenemy[i].x + redenemy[i].w;
 						if (doodler.x + doodler.w/2 >= min && doodler.x + doodler.w/2 <= max) {
+							playsound(jump);
 							doodler.vy = vy;
 							gamestarted = 1;
 							redenemy[i].life = dead;
@@ -309,6 +314,7 @@ void game(){
 						int min = blueenemy[i].x;
 						int max = blueenemy[i].x + blueenemy[i].w;
 						if (doodler.x + doodler.w/2 >= min && doodler.x + doodler.w/2 <= max ){
+							playsound(jump);
 							doodler.vy = vy;
 							gamestarted = 1;
 							blueenemy[i].life = dead;
@@ -358,6 +364,7 @@ void game(){
 					
 					//shoot the peashot
 					if((GPIO_PORTE_DATA_R & 0x02)>>1 == 1){
+						playsound(shoot);
 						delay5ms(1);
 						ST7735_DrawBitmap(peashot.x, peashot.y, peashotclear, 10, 10);
 						peashot.life = alive;
@@ -365,6 +372,7 @@ void game(){
 						peashot.x = doodler.x;
 						peashot.vy = 4;
 						peashot.vx = 0;
+						
 					}
 				
 				
