@@ -38,7 +38,7 @@ struct sprite{
 	const uint16_t *image; // ptr->image
 	int32_t w,h;
 	int32_t vx;			// x velocity
-	float vy;			// y velocity
+	int32_t vy;			// y velocity
   status_t life;         // dead/alive
 }; typedef struct sprite sprite_t;
 
@@ -68,21 +68,18 @@ sprite_t blueenemy[MAXBLUENEMIES];
 platform greenplatform[MAXGREENPLATFORMS];
 platform blueplatform[MAXBLUEPLATFORMS];
 
-
 int pauseState;
 int fireState;
 int nolongerstart = 0;
-
 int score = 0; //global score displayed at top left corner of screen
 uint32_t Data;
-
 uint32_t time = 0;
 volatile uint32_t flag;
 volatile uint32_t slideflag;
-
 void delay5ms(uint32_t count);
 void delay10ms(uint32_t count);
 void delay50ms(uint32_t count);
+
 //=========================================initialization=========================================
 void Init(void){
 	doodler.x = 50;
@@ -136,14 +133,15 @@ void Init(void){
 		blueenemy[i].vy = 0; 
 	}
 	
+	//make sure that there are reachable platforms
 	int badcount = 0;
 	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
-		if(greenplatform[i].y < 130){
+		if(greenplatform[i].y < 100){
 			badcount++;
 		}
 	}
 	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
-			if(greenplatform[i].y < 130){
+			if(greenplatform[i].y < 100){
 			badcount++;
 		}
 	}
@@ -155,6 +153,7 @@ void Init(void){
 
 void clock(void){
   time++;
+	score++;
 }
 
 int height = 121; 
@@ -162,8 +161,31 @@ int oldx;
 int oldy;
 void game();
 
+int language = 0x0; //0 for english, 1 for spanish
+
+void printlanguage(){
+	ST7735_FillRect(0, 120, 128, 40, ST7735_WHITE);
+	if(language == 0){	
+		ST7735_SetCursor(0, 13);
+		ST7735_OutString("Press pause to start");
+		ST7735_SetCursor(4, 14);
+		ST7735_OutString("Press shoot");
+		ST7735_SetCursor(4,15);
+		ST7735_OutString("for Spanish");
+	} 
+	else if(language == 1){
+		ST7735_SetCursor(3, 12);
+		ST7735_OutString("Presione pausa");
+		ST7735_SetCursor(3, 13);
+		ST7735_OutString("para comenzar");
+		ST7735_SetCursor(3, 14);
+		ST7735_OutString("Sesi\xA2n de prensa");
+		ST7735_SetCursor(3,15);
+		ST7735_OutString("para espa\xA4ol");
+	}
+}
+
 int main(void){
-	
 	DisableInterrupts();
   PLL_Init(Bus80MHz);       // Bus clock is 80 MHz 
   TExaS_Init();
@@ -180,27 +202,23 @@ int main(void){
 //====================================================start screen================================
 	ST7735_FillScreen(0xFFFF);
 	ST7735_DrawBitmap(10, 40, titlelogo, 104, 26);
-	ST7735_SetCursor(3, 14);
-	ST7735_OutString("Press any button");
-	ST7735_SetCursor(4,15);
-	ST7735_OutString("to start game");
-	ST7735_DrawBitmap(50, 130, green_platform_sprite, greenplatform[0].w, greenplatform[0].h);
+	printlanguage();
+	ST7735_DrawBitmap(50, 120, green_platform_sprite, greenplatform[0].w, greenplatform[0].h);
 	
 	fireState = 0;
 	pauseState = 0;
-	doodler.y = 121;
+	doodler.y = 110;
 	doodler.x = 50;
 	
-	while(fireState != 1 && pauseState != 1){
+	while(pauseState != 1){
 		doodler.y -= doodler.vy;
 		
-		if (doodler.y <=80){    //--------80
+		if (doodler.y <=70){    //--------80
 			doodler.vy *= -1;			//--------121
 		}
-		if(doodler.y >= 121){
+		if(doodler.y >= 110){
 			doodler.vy *= -1;
 		}
-		
 		delay5ms(1);
 	
 	ST7735_DrawBitmap(doodler.oldx, doodler.oldy, white, doodler.w, doodler.h);
@@ -209,6 +227,12 @@ int main(void){
 	doodler.oldy = doodler.y;
 			fireState ^= ((GPIO_PORTE_DATA_R & 0x02) >> 1);
 			pauseState ^= ((GPIO_PORTE_DATA_R & 0x01));
+		
+		if((GPIO_PORTE_DATA_R & 0x02) >> 1 == 1){
+      delay50ms(1);
+			language ^= 0x1;
+			printlanguage();
+		}
 	}
 	ST7735_FillScreen(0xFFFF);
 	EnableInterrupts();
@@ -458,33 +482,83 @@ void game(){
 
 				
 				//display score and time
-				ST7735_SetCursor(0, 0);					
-				ST7735_OutString("Score: ");
-				ST7735_SetCursor(7, 0);					
-				ST7735_OutUDec(score);		
-				ST7735_SetCursor(0, 1);					
-				ST7735_OutString("Time: ");				
-				ST7735_SetCursor(6, 1);					
-				ST7735_OutUDec(time);
+				if(language == 0){
+					ST7735_SetCursor(0, 0);					
+					ST7735_OutString("Score: ");
+					ST7735_SetCursor(7, 0);					
+					ST7735_OutUDec(score);		
+					ST7735_SetCursor(0, 1);					
+					ST7735_OutString("Time: ");				
+					ST7735_SetCursor(6, 1);					
+					ST7735_OutUDec(time);
+				}
+				else if(language == 1){
+					ST7735_SetCursor(0, 0);					
+					ST7735_OutString("Puntaje: ");
+					ST7735_SetCursor(8, 0);					
+					ST7735_OutUDec(score);		
+					ST7735_SetCursor(0, 1);					
+					ST7735_OutString("Tiempo: ");				
+					ST7735_SetCursor(7, 1);					
+					ST7735_OutUDec(time);
+				}
+				
 					
 					//pause screen
 			if((GPIO_PORTE_DATA_R & 0x01) == 1){
 					DisableInterrupts();				
 					delay50ms(1);
 					ST7735_FillScreen(0xFFFF);
-					ST7735_SetCursor(4, 5);
+				
+				if(language == 0){
+					ST7735_SetCursor(4, 4);
 					ST7735_OutString("---PAUSED---");
-					ST7735_SetCursor(3, 7);
+					ST7735_SetCursor(3, 6);
 				  ST7735_OutString("Score: ");
-				  ST7735_SetCursor(3, 8);
+				  ST7735_SetCursor(3, 7);
 					ST7735_OutUDec(score);
-					ST7735_SetCursor(3, 11);
+					ST7735_SetCursor(3, 9);
 					ST7735_OutString("Press pause");
-					ST7735_SetCursor(3, 12);
+					ST7735_SetCursor(3, 10);
 					ST7735_OutString("button to");
-					ST7735_SetCursor(3, 13);
+					ST7735_SetCursor(3, 11);
 					ST7735_OutString("unpause");
+					ST7735_SetCursor(3, 13);
+					ST7735_OutString("Press shoot");
+					ST7735_SetCursor(3,14);
+					ST7735_OutString("for Spanish");
+				}
+				else if(language == 1){
+					ST7735_SetCursor(5, 4);
+					ST7735_OutString("--EN PAUSA--");
+					ST7735_SetCursor(3, 6);
+				  ST7735_OutString("Puntaje: ");
+				  ST7735_SetCursor(3, 7);
+					ST7735_OutUDec(score);
+					ST7735_SetCursor(3, 9);
+					ST7735_OutString("Pulse pausa");
+					ST7735_SetCursor(3, 10);
+					ST7735_OutString("para reanudar");
+					ST7735_SetCursor(3, 11);
+					ST7735_OutString("la pausa");
+					ST7735_SetCursor(3, 13);
+					ST7735_OutString("Sesi\xA2n de prensa");
+					ST7735_SetCursor(4,14);
+					ST7735_OutString("para espa\xA4ol");
+				}
 					while((GPIO_PORTE_DATA_R & 0x01) != 1){
+						if((GPIO_PORTE_DATA_R & 0x02) >> 1 == 1){
+							delay50ms(1);
+							language ^= 0x1;
+							ST7735_FillRect(0, 0, 128, 10, ST7735_WHITE);
+							ST7735_SetCursor(0, 0);
+							if(language == 1){
+								ST7735_OutString("Espa\xA4ol");
+							} else if (language == 0){
+								ST7735_OutString("English");
+							}
+							
+						}
 					delay50ms(1);
 					}
 					delay50ms(1);
@@ -498,22 +572,40 @@ void game(){
 				DisableInterrupts();
 				ST7735_FillScreen(0xFFFF);
 				
-				ST7735_SetCursor(3, 5);
-							ST7735_OutString("---GAME OVER!---");
-							ST7735_SetCursor(3, 7);
-							ST7735_OutString("Score: ");
-							ST7735_SetCursor(3, 8);
-							ST7735_OutUDec(score);
-							ST7735_SetCursor(3, 11);
-							ST7735_OutString("Press any");
-							ST7735_SetCursor(3, 12);
-							ST7735_OutString("button to");
-							ST7735_SetCursor(3, 13);
-							ST7735_OutString("play again");
-				
+				if(language == 0){				
+					ST7735_SetCursor(3, 5);
+					ST7735_OutString("---GAME OVER!---");
+					ST7735_SetCursor(3, 7);
+					ST7735_OutString("Score: ");
+					ST7735_SetCursor(3, 8);
+					ST7735_OutUDec(score);
+					ST7735_SetCursor(3, 11);
+					ST7735_OutString("Press any");
+					ST7735_SetCursor(3, 12);
+					ST7735_OutString("button to");
+					ST7735_SetCursor(3, 13);
+					ST7735_OutString("play again");
+				} 
+				else if(language == 1){
+					ST7735_SetCursor(1, 5);
+					ST7735_OutString("-\xADJUEGO TERMINADO!-");
+					ST7735_SetCursor(3, 7);
+					ST7735_OutString("Puntaje: ");
+					ST7735_SetCursor(3, 8);
+					ST7735_OutUDec(score);
+					ST7735_SetCursor(2, 11);
+					ST7735_OutString("Presiona cualquier");
+					ST7735_SetCursor(2, 12);
+					ST7735_OutString("cordero para");
+					ST7735_SetCursor(2, 13);
+					ST7735_OutString("volver a jugar");
+				}
+
 				while(((GPIO_PORTE_DATA_R & 0x01) != 1) && ((GPIO_PORTE_DATA_R & 0x02)>>1 != 1)){
 				delay50ms(1);
 				}
+				score = 0;
+				time = 0;
 				doodler.life = alive;
 				ST7735_FillScreen(0xFFFF);
 				Init();
