@@ -54,3 +54,8 @@ void TIMER1A_Handler(void){
   TIMER1_ICR_R = TIMER_ICR_TATOCINT;// acknowledge TIMER1A timeout
   (*PeriodicTask1)();                // execute user task
 }
+
+void Timer1A_Stop(void){ 
+  TIMER1_IMR_R &= ~0x00000001;      // 1) disarm timer1 timeout interrupt
+  NVIC_DIS0_R = 1<<21;              // 2) disable interrupt 21 in NVIC
+}
