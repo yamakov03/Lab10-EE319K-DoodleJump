@@ -55,17 +55,12 @@ struct platform{
   status_t life;         // dead/alive
 }; typedef struct platform platform;
 
-#define MAXGREENPLATFORMS 5
-#define MAXBLUEPLATFORMS 3
-#define MAXREDENEMIES 1
-#define MAXBLUENEMIES 1
-#define MAXWIDTH 100 // 128 is actual width, make smaller so platforms aren't cut off
-#define MAXHEIGHT 160
-#define PLATFORMSPEED 1
+#define MAXGREENPLATFORMS 6
+#define MAXBLUEPLATFORMS 2
 
 sprite_t doodler;
-sprite_t redenemy[MAXREDENEMIES];
-sprite_t blueenemy[MAXBLUENEMIES];
+sprite_t redenemy;
+sprite_t blueenemy;
 platform greenplatform[MAXGREENPLATFORMS];
 platform blueplatform[MAXBLUEPLATFORMS];
 
@@ -81,6 +76,9 @@ void delay5ms(uint32_t count);
 void delay10ms(uint32_t count);
 void delay50ms(uint32_t count);
 
+int MAXWIDTH = 100; // 128 is actual width, make smaller so platforms aren't cut off
+int MAXHEIGHT = 160;
+int PLATFORMSPEED =1;
 //=========================================initialization=========================================
 void Init(void){
 	doodler.x = 50;
@@ -91,7 +89,7 @@ void Init(void){
 	doodler.vx = 0; 
 	doodler.vy = 1; 
 	doodler.life = alive;
-	
+
 	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
 		greenplatform[i].x = Random()%MAXWIDTH;
 		greenplatform[i].y = Random()%MAXHEIGHT;
@@ -112,37 +110,30 @@ void Init(void){
 		blueplatform[i].vy = 0; 
 	}
 	
-	for(int i = 0; i < MAXREDENEMIES; i++) {
-		redenemy[i].life = alive;
-		redenemy[i].x = Random()%MAXWIDTH;
-		redenemy[i].y = Random()%MAXHEIGHT;
-		redenemy[i].image = red_enemy_sprite;
-		redenemy[i].w = 17;
-		redenemy[i].h = 12;
-		redenemy[i].vx = 0; 
-		redenemy[i].vy = 0; 
-	}
-	
-	for(int i = 0; i < MAXBLUENEMIES; i++) {
-		blueenemy[i].life = alive;
-		blueenemy[i].x = Random()%MAXWIDTH;
-		blueenemy[i].y = Random()%MAXHEIGHT;
-		blueenemy[i].image = blue_enemy_sprite;
-		blueenemy[i].w = 22;
-		blueenemy[i].h = 13;
-		blueenemy[i].vx = 0; 
-		blueenemy[i].vy = 0; 
-	}
-	
 	//make sure that there are reachable platforms
 	int badcount = 0;
 	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
-		if(greenplatform[i].y < 100){
+		if(greenplatform[i].y < 60){
 			badcount++;
 		}
 	}
 	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
-			if(greenplatform[i].y < 100){
+		if(blueplatform[i].y < 60){
+			badcount++;
+		}
+	}
+	if(badcount > 4){
+		Init();
+	}
+	badcount = 0;
+	
+	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
+		if(greenplatform[i].y > 120){
+			badcount++;
+		}
+	}
+	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
+		if(blueplatform[i].y < 120){
 			badcount++;
 		}
 	}
@@ -150,6 +141,24 @@ void Init(void){
 		Init();
 	}
 	
+	redenemy.life = alive;
+	redenemy.x = Random()%MAXWIDTH;
+	redenemy.y = Random()%MAXHEIGHT;
+	redenemy.image = red_enemy_sprite;
+	redenemy.w = 17;
+	redenemy.h = 12;
+	redenemy.vx = 0; 
+	redenemy.vy = 0; 
+
+
+	blueenemy.life = alive;
+	blueenemy.x = Random()%MAXWIDTH;
+	blueenemy.y = Random()%MAXHEIGHT;
+	blueenemy.image = blue_enemy_sprite;
+	blueenemy.w = 22;
+	blueenemy.h = 13;
+	blueenemy.vx = 0; 
+	blueenemy.vy = 0; 
 }
 
 void clock(void){
@@ -186,6 +195,24 @@ void printlanguage(){
 	}
 }
 
+//doodler death by enemies
+void Death() {
+	if ((doodler.y > redenemy.y && doodler.y < (redenemy.y + redenemy.h)) && doodler.vy < 0) {
+		int min = redenemy.x;
+		int max = redenemy.x + redenemy.w;
+		if (doodler.x + doodler.w > min && doodler.x < max && redenemy.life == alive){
+			doodler.life = dead;
+		}
+	}
+
+	if ((doodler.y > blueenemy.y && doodler.y < (blueenemy.y + blueenemy.h)) && doodler.vy < 0) {
+		int min = blueenemy.x;
+		int max = blueenemy.x + blueenemy.w;
+		if (doodler.x + doodler.w > min && doodler.x  < max && blueenemy.life == alive){
+			doodler.life = dead;
+		}
+	}
+}
 int main(void){
 	DisableInterrupts();
   PLL_Init(Bus80MHz);       // Bus clock is 80 MHz 
@@ -193,8 +220,10 @@ int main(void){
   Random_Init(1);
   ADC_Init(); 
 	ST7735_InitR(INITR_REDTAB);
-  //Timer0_Init(Draw,800000); // 50 Hz, calls draw to update screen  !!!originally was (Draw,800000) == 50 Hz
+	Timer0_Init(Death,800000);
   Timer1_Init(clock,64000000); // 1 Hz
+	
+	Sound_Init();
 	SysTick_Init(4000000);
 	Init();
 	PortF_Init();
@@ -222,301 +251,268 @@ int main(void){
 		}
 		delay5ms(1);
 	
-	ST7735_DrawBitmap(doodler.oldx, doodler.oldy, white, doodler.w, doodler.h);
-	ST7735_DrawBitmap(doodler.x, doodler.y, doodler.image, doodler.w, doodler.h);
-	doodler.oldx = doodler.x;
-	doodler.oldy = doodler.y;
-			fireState ^= ((GPIO_PORTE_DATA_R & 0x02) >> 1);
-			pauseState ^= ((GPIO_PORTE_DATA_R & 0x01));
-		
+		ST7735_DrawBitmap(doodler.oldx, doodler.oldy, white, doodler.w, doodler.h);
+		ST7735_DrawBitmap(doodler.x, doodler.y, doodler.image, doodler.w, doodler.h);
+		doodler.oldx = doodler.x;
+		doodler.oldy = doodler.y;
+		fireState ^= ((GPIO_PORTE_DATA_R & 0x02) >> 1);
+		pauseState ^= ((GPIO_PORTE_DATA_R & 0x01));
+			
 		if((GPIO_PORTE_DATA_R & 0x02) >> 1 == 1){
-      delay50ms(1);
+			delay50ms(1);
 			language ^= 0x1;
 			printlanguage();
 		}
 	}
+	
 	ST7735_FillScreen(0xFFFF);
 	EnableInterrupts();
 	game();
 }
+
 //=======================================main loop====================================================
 void game(){
+	delay50ms(2);
 	EnableInterrupts();
 
-					int globalheight = 100;
-					doodler.vy = 0; //doodler speed
-					
-					score = 0;
-					sprite_t peashot;
-					int vy = -10;
-					int gamestarted = 0;
+	int globalheight = 100;
+	doodler.vy = 0; //doodler speed
+	
+	score = 0;
+	sprite_t peashot;
+	int vy = -12;
+	int gamestarted = 0;
 	
 	//!! 	COORDINATES START AT BOTTOM LEFT CORNER OF PICTURE
 
   while(1){
 		while(doodler.life == alive){
-			
+			if(score < 5) {
+				blueenemy.life = dead;
+				redenemy.life = dead;
+			}
 			//slidepot
-				my.Sync();
-				//doodler.oldx = doodler.x;
-				while(slideflag == 1){
-					doodler.x = (120*Data/4095);
-					slideflag = 0;
-				}					
+			my.Sync();
+			//doodler.oldx = doodler.x;
+			while(slideflag == 1){
+				doodler.x = (120*Data/4095);
+				slideflag = 0;
+			}					
 				
 			//move the doodler
-				//doodler.oldy = doodler.y;
-				doodler.vy += 1;
-				doodler.y += doodler.vy;		
-				if(doodler.y > 160){
-					playsound(jump);
-					doodler.vy = vy;
-				}
+			//doodler.oldy = doodler.y;
+			doodler.vy += 1;
+			doodler.y += doodler.vy;		
+			if(doodler.y > 160){
+				playsound(jump);
+				doodler.vy = vy;
+			}
 				
 			//manage platform collisions
-				for(int i = 0; i<MAXBLUEPLATFORMS; i++){
-					if ((doodler.y > blueplatform[i].y - blueplatform[i].h && doodler.y <= blueplatform[i].y) && doodler.vy > 0 ) {
-						int min = blueplatform[i].x;
-						int max = blueplatform[i].x + blueplatform[i].w;
-						if (doodler.x + doodler.w/2 >= min && doodler.x + doodler.w/2 <= max ){
-							playsound(jump);
-							doodler.vy = vy;
-							gamestarted = 1;
-						}
+			for(int i = 0; i<MAXBLUEPLATFORMS; i++){
+				if ((doodler.y > blueplatform[i].y - blueplatform[i].h && doodler.y <= blueplatform[i].y) && doodler.vy > 0 ) {
+					if (doodler.x + doodler.w/2 >= blueplatform[i].x && doodler.x + doodler.w/2 <= blueplatform[i].x + blueplatform[i].w ){
+						playsound(jump);
+						doodler.vy = vy;
+						gamestarted = 1;
 					}
 				}
-				for(int i = 0; i<MAXGREENPLATFORMS; i++){
-					if ((doodler.y > greenplatform[i].y - greenplatform[i].h && doodler.y <= greenplatform[i].y) && doodler.vy > 0) {
-						int min = greenplatform[i].x;
-						int max = greenplatform[i].x + greenplatform[i].w;
-						if (doodler.x + doodler.w/2 >= min && doodler.x + doodler.w/2 <= max) {
-							playsound(jump);
-							doodler.vy = vy;
-							gamestarted = 1;
-						}
+			}
+			for(int i = 0; i<MAXGREENPLATFORMS; i++){
+				if ((doodler.y > greenplatform[i].y - greenplatform[i].h && doodler.y <= greenplatform[i].y) && doodler.vy > 0) {
+					if (doodler.x + doodler.w/2 >= greenplatform[i].x && doodler.x + doodler.w/2 <= greenplatform[i].x + greenplatform[i].w) {
+						playsound(jump);
+						doodler.vy = vy;
+						gamestarted = 1;
 					}
 				}
-				//jumping on top of enemies
-				for(int i = 0; i<MAXREDENEMIES; i++){
-					if ((doodler.y > redenemy[i].y - redenemy[i].h && doodler.y <= redenemy[i].y) && doodler.vy > 0) {
-						int min = redenemy[i].x;
-						int max = redenemy[i].x + redenemy[i].w;
-						if (doodler.x + doodler.w/2 >= min && doodler.x + doodler.w/2 <= max) {
-							playsound(jump);
-							doodler.vy = vy;
-							gamestarted = 1;
-							redenemy[i].life = dead;
-						}
-					}
+			}
+					
+			//jumping on top of enemies
+			if ((doodler.y > redenemy.y - redenemy.h && doodler.y <= redenemy.y) && doodler.vy > 0) {
+				if (doodler.x + doodler.w/2 >= redenemy.x && doodler.x + doodler.w/2 <= redenemy.x + redenemy.w && redenemy.life == alive) {
+					playsound(jump);
+					doodler.vy = vy;
+					gamestarted = 1;
+					redenemy.life = dead;
 				}
-				for(int i = 0; i<MAXBLUENEMIES; i++){
-					if ((doodler.y > blueenemy[i].y - blueenemy[i].h && doodler.y <= blueenemy[i].y) && doodler.vy > 0 ) {
-						int min = blueenemy[i].x;
-						int max = blueenemy[i].x + blueenemy[i].w;
-						if (doodler.x + doodler.w/2 >= min && doodler.x + doodler.w/2 <= max ){
-							playsound(jump);
-							doodler.vy = vy;
-							gamestarted = 1;
-							blueenemy[i].life = dead;
-						}
-					}
+			}
+			if ((doodler.y > blueenemy.y - blueenemy.h && doodler.y <= blueenemy.y) && doodler.vy > 0 ) {
+				if (doodler.x + doodler.w/2 >= blueenemy.x && doodler.x + doodler.w/2 <= blueenemy.x + blueenemy.w && blueenemy.life == alive){
+					playsound(jump);
+					doodler.vy = vy;
+					gamestarted = 1;
+					blueenemy.life = dead;
 				}
+			}
+			
+			//peashot logic
+			if(peashot.life == alive){
+				peashot.oldy = peashot.y;
+				peashot.oldx = peashot.x;
+				peashot.y -= peashot.vy;
+				ST7735_DrawBitmap(peashot.oldx, peashot.oldy, peashotclear, 10, 10);
+				ST7735_DrawBitmap(peashot.x, peashot.y, peashot_sprite, 10, 10);
+			}
 				
+			//shoot the peashot
+			if((GPIO_PORTE_DATA_R & 0x02)>>1 == 1){
+				playsound(shoot);
+				delay5ms(1);
+				ST7735_DrawBitmap(peashot.x, peashot.y, peashotclear, 10, 10);
+				peashot.life = alive;
+				peashot.y = doodler.y;
+				peashot.x = doodler.x;
+				peashot.vy = 4;
+				peashot.vx = 0;
 				
-				//peashot logic
-					if(peashot.life == alive){
-						peashot.oldy = peashot.y;
-						peashot.oldx = peashot.x;
-						peashot.y -= peashot.vy;
-						ST7735_DrawBitmap(peashot.oldx, peashot.oldy, peashotclear, 10, 10);
-						ST7735_DrawBitmap(peashot.x, peashot.y, peashot_sprite, 10, 10);
-					}
+			}
 					
-					for(int i = 0; i < MAXREDENEMIES; i++){
-						if(((peashot.x + 5> redenemy[i].x) && (peashot.x + 5< redenemy[i].x + redenemy[i].w)) && peashot.y < redenemy[i].y){
-							peashot.life = dead;
-							redenemy[i].life = dead;
-							score += 10;
-						}
-						if ((doodler.y == redenemy[i].y) && doodler.vy < 0) {
-							int min = redenemy[i].x;
-							int max = redenemy[i].x + redenemy[i].w;
-							if (doodler.x + doodler.w/2 > min && doodler.x + doodler.w/2 < max ){
-								doodler.life = dead;
-							}
-						}
-					}	
-					
-					for(int i = 0; i < MAXBLUENEMIES; i++){
-						if(((peashot.x + 5> blueenemy[i].x) && (peashot.x + 5 < blueenemy[i].x + blueenemy[i].w)) && peashot.y < blueenemy[i].y){
-							peashot.life = dead;
-							blueenemy[i].life = dead;
-							score += 10;
-						}
-						if ((doodler.y == blueenemy[i].y) && doodler.vy < 0) {
-							int min = blueenemy[i].x;
-							int max = blueenemy[i].x + blueenemy[i].w;
-							if (doodler.x + doodler.w/2 > min && doodler.x + doodler.w/2 < max ){
-								doodler.life = dead;
-							}
-						}
-					}
-					
-					//shoot the peashot
-					if((GPIO_PORTE_DATA_R & 0x02)>>1 == 1){
-						playsound(shoot);
-						delay5ms(1);
-						ST7735_DrawBitmap(peashot.x, peashot.y, peashotclear, 10, 10);
-						peashot.life = alive;
-						peashot.y = doodler.y;
-						peashot.x = doodler.x;
-						peashot.vy = 4;
-						peashot.vx = 0;
-						
-					}
+			if(((peashot.x + 5> redenemy.x) && (peashot.x + 5< redenemy.x + redenemy.w)) && peashot.y < redenemy.y){
+				peashot.life = dead;
+				redenemy.life = dead;
+				score += 10;
+			}
+
+			if(((peashot.x + 5> blueenemy.x) && (peashot.x + 5 < blueenemy.x + blueenemy.w)) && peashot.y < blueenemy.y){
+				peashot.life = dead;
+				blueenemy.life = dead;
+				score += 10;
+			}
+
 				
 				
 			//update sprite x and y
-				if(doodler.y < globalheight){
-					doodler.y -= vy;
+			if(doodler.y < globalheight){
+				doodler.y -= vy;
+				
+				score++;
+				for(int i = 0; i < MAXBLUEPLATFORMS; i++){
 					
-					score++;
-					for(int i = 0; i < MAXBLUEPLATFORMS; i++){
-						
-						if(doodler.vy < 0){
-							blueplatform[i].y -= vy-2;
-						}
-						if(blueplatform[i].y > 165 + blueplatform[i].h){
-							blueplatform[i].y = 0;
-							blueplatform[i].x = Random()%MAXWIDTH;
-						}
+					if(doodler.vy < 0){
+						blueplatform[i].y -= vy;
 					}
+					if(blueplatform[i].y > 165 + blueplatform[i].h){
+						blueplatform[i].y = 0;
+						blueplatform[i].x = Random()%MAXWIDTH;
+					}
+				}
+				
+				for(int i = 0; i < MAXGREENPLATFORMS; i++){
+					if(doodler.vy < 0){
+						greenplatform[i].y -= vy;
+					}
+					if(greenplatform[i].y > 165 + greenplatform[i].h){
+						greenplatform[i].y = 0;
+						greenplatform[i].x = Random()%MAXWIDTH;
+					}
+				}	
 					
-					for(int i = 0; i < MAXGREENPLATFORMS; i++){
-						if(doodler.vy < 0){
-							greenplatform[i].y -= vy-2;
-						}
-						if(greenplatform[i].y > 165 + greenplatform[i].h){
-							greenplatform[i].y = 0;
-							greenplatform[i].x = Random()%MAXWIDTH;
-						}
-					}	
-					
-					for(int i = 0; i < MAXREDENEMIES; i++){
+				if(doodler.vy < 0){
+					redenemy.y  -= vy;
+				}
+				if(redenemy.y > 160){
+					redenemy.life = alive;
+					redenemy.y = 0;
+					redenemy.x = Random()%MAXWIDTH;
+				}
 
-						if(doodler.vy < 0){
-							redenemy[i].y  -= vy-2;
-						}
-						if(redenemy[i].y > 160){
-							redenemy[i].life = alive;
-							redenemy[i].y = 0;
-							redenemy[i].x = Random()%MAXWIDTH;
-						}
-					}	
-					
-					for(int i = 0; i < MAXBLUENEMIES; i++){
+			
 
-						if(doodler.vy < 0){
-							blueenemy[i].y  -= vy-2;
-						}
-						if(redenemy[i].y > 165 + blueenemy[i].h){
-							blueenemy[i].life = alive;
-							blueenemy[i].y = 0;
-							blueenemy[i].x = Random()%MAXWIDTH;
-						}
-					}
-					
+				if(doodler.vy < 0){
+					blueenemy.y  -= vy;
 				}
-				
-				//draw platforms
-				for(int i = 0; i < MAXGREENPLATFORMS; i++) {
-					ST7735_DrawBitmap(greenplatform[i].oldx, greenplatform[i].oldy, clearedplatform, greenplatform[i].w, greenplatform[i].h);
-					ST7735_DrawBitmap(greenplatform[i].x, greenplatform[i].y, greenplatform[i].image, greenplatform[i].w, greenplatform[i].h);
-					greenplatform[i].oldy = greenplatform[i].y;
-					greenplatform[i].oldx = greenplatform[i].x;
-					
+				if(blueenemy.y > 160){
+					blueenemy.life = alive;
+					blueenemy.y = 0;
+					blueenemy.x = Random()%MAXWIDTH;
 				}
-	
-				for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
-					blueplatform[i].oldx = blueplatform[i].x;
-					blueplatform[i].x += blueplatform[i].vx;
-					if(blueplatform[i].x == 100){
-						blueplatform[i].vx *= -1;
-					}
-					if(blueplatform[i].x == 0){
-						blueplatform[i].vx *= -1;
-					}
-					ST7735_DrawBitmap(blueplatform[i].oldx, blueplatform[i].oldy, clearedplatform, blueplatform[i].w, blueplatform[i].h);
-					ST7735_DrawBitmap(blueplatform[i].x, blueplatform[i].y, blueplatform[i].image, blueplatform[i].w, blueplatform[i].h);
-					blueplatform[i].oldy = blueplatform[i].y;
-					blueplatform[i].oldx = blueplatform[i].x;
-				}
-				
-				
-				//draw enemies	
-				for(int i = 0; i < MAXREDENEMIES; i++){
-						ST7735_DrawBitmap(redenemy[i].oldx, redenemy[i].oldy, redclear, redenemy[i].w, redenemy[i].h);
-						if(redenemy[i].life == alive){
-							ST7735_DrawBitmap(redenemy[i].x, redenemy[i].y, redenemy[i].image, redenemy[i].w, redenemy[i].h);
-								redenemy[i].oldy = redenemy[i].y;
-								redenemy[i].oldx = redenemy[i].x;
-							
-						}
-						else {ST7735_DrawBitmap(redenemy[i].oldx, redenemy[i].oldy, redclear, redenemy[i].w, redenemy[i].h);}
-					}	
-					
-					for(int i = 0; i < MAXBLUENEMIES; i++){
-						ST7735_DrawBitmap(blueenemy[i].oldx, blueenemy[i].oldy, blueclear, blueenemy[i].w, blueenemy[i].h);
-						if(blueenemy[i].life == alive){
-							ST7735_DrawBitmap(blueenemy[i].x, blueenemy[i].y, blueenemy[i].image, blueenemy[i].w, blueenemy[i].h);
-								blueenemy[i].oldy = blueenemy[i].y;
-								blueenemy[i].oldx = blueenemy[i].x;
-						}
-						else {ST7735_DrawBitmap(blueenemy[i].oldx, blueenemy[i].oldy, blueclear, blueenemy[i].w, blueenemy[i].h);}
-					}
+			}
 
 				
+			//draw platforms
+			for(int i = 0; i < MAXGREENPLATFORMS; i++) {
+				ST7735_DrawBitmap(greenplatform[i].oldx, greenplatform[i].oldy, clearedplatform, greenplatform[i].w, greenplatform[i].h);
+				ST7735_DrawBitmap(greenplatform[i].x, greenplatform[i].y, greenplatform[i].image, greenplatform[i].w, greenplatform[i].h);
+				greenplatform[i].oldy = greenplatform[i].y;
+				greenplatform[i].oldx = greenplatform[i].x;
 				
-				
-				//draw doodler
-				if(doodler.y > 160 && gamestarted == 1) {
-					doodler.life = dead;
+			}
+
+			for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
+				blueplatform[i].oldx = blueplatform[i].x;
+				blueplatform[i].x += blueplatform[i].vx;
+				if(blueplatform[i].x == 100){
+					blueplatform[i].vx *= -1;
 				}
+				if(blueplatform[i].x == 0){
+					blueplatform[i].vx *= -1;
+				}
+				ST7735_DrawBitmap(blueplatform[i].oldx, blueplatform[i].oldy, clearedplatform, blueplatform[i].w, blueplatform[i].h);
+				ST7735_DrawBitmap(blueplatform[i].x, blueplatform[i].y, blueplatform[i].image, blueplatform[i].w, blueplatform[i].h);
+				blueplatform[i].oldy = blueplatform[i].y;
+				blueplatform[i].oldx = blueplatform[i].x;
+			}
 				
-				ST7735_DrawBitmap(doodler.oldx, doodler.oldy, white, doodler.w, doodler.h);
-				ST7735_DrawBitmap(doodler.x, doodler.y, doodler.image, doodler.w, doodler.h);
-				doodler.oldx = doodler.x;
-				doodler.oldy = doodler.y;
+				
+			//draw enemies	
+			ST7735_DrawBitmap(redenemy.oldx, redenemy.oldy, redclear, redenemy.w, redenemy.h);
+			if(redenemy.life == alive){
+				ST7735_DrawBitmap(redenemy.x, redenemy.y, redenemy.image, redenemy.w, redenemy.h);
+					redenemy.oldy = redenemy.y;
+					redenemy.oldx = redenemy.x;
+				
+			}
+			else {ST7735_DrawBitmap(redenemy.oldx, redenemy.oldy, redclear, redenemy.w, redenemy.h);}
+		
+			ST7735_DrawBitmap(blueenemy.oldx, blueenemy.oldy, blueclear, blueenemy.w, blueenemy.h);
+			if(blueenemy.life == alive){
+				ST7735_DrawBitmap(blueenemy.x, blueenemy.y, blueenemy.image, blueenemy.w, blueenemy.h);
+					blueenemy.oldy = blueenemy.y;
+					blueenemy.oldx = blueenemy.x;
+			}
+			else {ST7735_DrawBitmap(blueenemy.oldx, blueenemy.oldy, blueclear, blueenemy.w, blueenemy.h);}
+
+			
+			//draw doodler
+			if(doodler.y > 160 && gamestarted == 1) {
+				doodler.life = dead;
+			}
+			
+			ST7735_DrawBitmap(doodler.oldx, doodler.oldy, white, doodler.w, doodler.h);
+			ST7735_DrawBitmap(doodler.x, doodler.y, doodler.image, doodler.w, doodler.h);
+			doodler.oldx = doodler.x;
+			doodler.oldy = doodler.y;
 
 				
-				//display score and time
-				if(language == 0){
-					ST7735_SetCursor(0, 0);					
-					ST7735_OutString("Score: ");
-					ST7735_SetCursor(7, 0);					
-					ST7735_OutUDec(score);		
-					ST7735_SetCursor(0, 1);					
-					ST7735_OutString("Time: ");				
-					ST7735_SetCursor(6, 1);					
-					ST7735_OutUDec(time);
-				}
-				else if(language == 1){
-					ST7735_SetCursor(0, 0);					
-					ST7735_OutString("Puntaje: ");
-					ST7735_SetCursor(8, 0);					
-					ST7735_OutUDec(score);		
-					ST7735_SetCursor(0, 1);					
-					ST7735_OutString("Tiempo: ");				
-					ST7735_SetCursor(7, 1);					
-					ST7735_OutUDec(time);
-				}
-				
+			//display score and time
+			if(language == 0){
+				ST7735_SetCursor(0, 0);					
+				ST7735_OutString("Score: ");
+				ST7735_SetCursor(7, 0);					
+				ST7735_OutUDec(score);		
+				ST7735_SetCursor(0, 1);					
+				ST7735_OutString("Time: ");				
+				ST7735_SetCursor(6, 1);					
+				ST7735_OutUDec(time);
+			}
+			else if(language == 1){
+				ST7735_SetCursor(0, 0);					
+				ST7735_OutString("Puntaje: ");
+				ST7735_SetCursor(8, 0);					
+				ST7735_OutUDec(score);		
+				ST7735_SetCursor(0, 1);					
+				ST7735_OutString("Tiempo: ");				
+				ST7735_SetCursor(7, 1);					
+				ST7735_OutUDec(time);
+			}
+			
 					
-					//pause screen
+			//pause screen
 			if((GPIO_PORTE_DATA_R & 0x01) == 1){
-					DisableInterrupts();				
-					delay50ms(1);
-					ST7735_FillScreen(0xFFFF);
+				DisableInterrupts();				
+				delay50ms(1);
+				ST7735_FillScreen(0xFFFF);
 				
 				if(language == 0){
 					ST7735_SetCursor(4, 4);
@@ -554,74 +550,74 @@ void game(){
 					ST7735_SetCursor(4,14);
 					ST7735_OutString("para espa\xA4ol");
 				}
-					while((GPIO_PORTE_DATA_R & 0x01) != 1){
-						if((GPIO_PORTE_DATA_R & 0x02) >> 1 == 1){
-							delay50ms(1);
-							language ^= 0x1;
-							ST7735_FillRect(0, 0, 128, 10, ST7735_WHITE);
-							ST7735_SetCursor(0, 0);
-							if(language == 1){
-								ST7735_OutString("Espa\xA4ol");
-							} else if (language == 0){
-								ST7735_OutString("English");
-							}
-							
+				while((GPIO_PORTE_DATA_R & 0x01) != 1){
+					if((GPIO_PORTE_DATA_R & 0x02) >> 1 == 1){
+						delay50ms(1);
+						language ^= 0x1;
+						ST7735_FillRect(0, 0, 128, 10, ST7735_WHITE);
+						ST7735_SetCursor(0, 0);
+						if(language == 1){
+							ST7735_OutString("Espa\xA4ol");
+						} else if (language == 0){
+							ST7735_OutString("English");
 						}
-					delay50ms(1);
 					}
 					delay50ms(1);
+				}
+				delay50ms(1);
 				ST7735_FillScreen(0xFFFF);
 				EnableInterrupts();
-				}
+			}
 		}
 		
 		//print end screen
-			if(doodler.life == dead){
-				DisableInterrupts();
-				ST7735_FillScreen(0xFFFF);
-				
-				if(language == 0){				
-					ST7735_SetCursor(3, 5);
-					ST7735_OutString("---GAME OVER!---");
-					ST7735_SetCursor(3, 7);
-					ST7735_OutString("Score: ");
-					ST7735_SetCursor(3, 8);
-					ST7735_OutUDec(score);
-					ST7735_SetCursor(3, 11);
-					ST7735_OutString("Press any");
-					ST7735_SetCursor(3, 12);
-					ST7735_OutString("button to");
-					ST7735_SetCursor(3, 13);
-					ST7735_OutString("play again");
-				} 
-				else if(language == 1){
-					ST7735_SetCursor(1, 5);
-					ST7735_OutString("-\xADJUEGO TERMINADO!-");
-					ST7735_SetCursor(3, 7);
-					ST7735_OutString("Puntaje: ");
-					ST7735_SetCursor(3, 8);
-					ST7735_OutUDec(score);
-					ST7735_SetCursor(2, 11);
-					ST7735_OutString("Presiona cualquier");
-					ST7735_SetCursor(2, 12);
-					ST7735_OutString("cordero para");
-					ST7735_SetCursor(2, 13);
-					ST7735_OutString("volver a jugar");
-				}
-
-				while(((GPIO_PORTE_DATA_R & 0x01) != 1) && ((GPIO_PORTE_DATA_R & 0x02)>>1 != 1)){
-				delay50ms(1);
-				}
-				score = 0;
-				time = 0;
-				doodler.life = alive;
-				ST7735_FillScreen(0xFFFF);
-				Init();
-				EnableInterrupts();
-				game();
+		if(doodler.life == dead){
+			DisableInterrupts();
+			ST7735_FillScreen(0xFFFF);
+			
+			if(language == 0){				
+				ST7735_SetCursor(3, 5);
+				ST7735_OutString("---GAME OVER!---");
+				ST7735_SetCursor(3, 7);
+				ST7735_OutString("Score: ");
+				ST7735_SetCursor(3, 8);
+				ST7735_OutUDec(score);
+				ST7735_SetCursor(3, 11);
+				ST7735_OutString("Press any");
+				ST7735_SetCursor(3, 12);
+				ST7735_OutString("button to");
+				ST7735_SetCursor(3, 13);
+				ST7735_OutString("play again");
+			} 
+			else if(language == 1){
+				ST7735_SetCursor(1, 5);
+				ST7735_OutString("-\xADJUEGO TERMINADO!-");
+				ST7735_SetCursor(3, 7);
+				ST7735_OutString("Puntaje: ");
+				ST7735_SetCursor(3, 8);
+				ST7735_OutUDec(score);
+				ST7735_SetCursor(2, 11);
+				ST7735_OutString("Presiona cualquier");
+				ST7735_SetCursor(2, 12);
+				ST7735_OutString("cordero para");
+				ST7735_SetCursor(2, 13);
+				ST7735_OutString("volver a jugar");
 			}
+
+			while(((GPIO_PORTE_DATA_R & 0x01) != 1) && ((GPIO_PORTE_DATA_R & 0x02)>>1 != 1)){
+			delay50ms(1);
+			}
+			delay50ms(2);
+			score = 0;
+			time = 0;
+			doodler.life = alive;
+			ST7735_FillScreen(0xFFFF);
+			Init();
+			EnableInterrupts();
+			game();
 		}
 	}
+}
 
 
 
