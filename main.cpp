@@ -69,7 +69,7 @@ int fireState;
 int nolongerstart = 0;
 int score = 0; //global score displayed at top left corner of screen
 uint32_t Data;
-uint32_t time = 0;
+uint32_t timercount = 0;
 volatile uint32_t flag;
 volatile uint32_t slideflag;
 void delay5ms(uint32_t count);
@@ -161,10 +161,6 @@ void Init(void){
 	blueenemy.vy = 0; 
 }
 
-void clock(void){
-  time++;
-	score++;
-}
 
 int height = 121; 
 int oldx;
@@ -213,6 +209,12 @@ void Death() {
 		}
 	}
 }
+
+void clock(){
+  timercount++;
+	score++;
+}
+
 int main(void){
 	DisableInterrupts();
   PLL_Init(Bus80MHz);       // Bus clock is 80 MHz 
@@ -221,7 +223,7 @@ int main(void){
   ADC_Init(); 
 	ST7735_InitR(INITR_REDTAB);
 	Timer0_Init(Death,800000);
-  Timer1_Init(clock,64000000); // 1 Hz
+  Timer1_Init(clock,16000000); // 1 Hz
 	
 	Sound_Init();
 	SysTick_Init(4000000);
@@ -266,13 +268,13 @@ int main(void){
 	}
 	
 	ST7735_FillScreen(0xFFFF);
-	EnableInterrupts();
 	game();
 }
 
 //=======================================main loop====================================================
 void game(){
 	delay50ms(2);
+	timercount = 0;
 	EnableInterrupts();
 
 	int globalheight = 100;
@@ -371,13 +373,13 @@ void game(){
 			if(((peashot.x + 5> redenemy.x) && (peashot.x + 5< redenemy.x + redenemy.w)) && peashot.y < redenemy.y){
 				peashot.life = dead;
 				redenemy.life = dead;
-				score += 10;
+				score ++;
 			}
 
 			if(((peashot.x + 5> blueenemy.x) && (peashot.x + 5 < blueenemy.x + blueenemy.w)) && peashot.y < blueenemy.y){
 				peashot.life = dead;
 				blueenemy.life = dead;
-				score += 10;
+				score ++;
 			}
 
 				
@@ -494,7 +496,7 @@ void game(){
 				ST7735_SetCursor(0, 1);					
 				ST7735_OutString("Time: ");				
 				ST7735_SetCursor(6, 1);					
-				ST7735_OutUDec(time);
+				ST7735_OutUDec(timercount);
 			}
 			else if(language == 1){
 				ST7735_SetCursor(0, 0);					
@@ -504,7 +506,7 @@ void game(){
 				ST7735_SetCursor(0, 1);					
 				ST7735_OutString("Tiempo: ");				
 				ST7735_SetCursor(7, 1);					
-				ST7735_OutUDec(time);
+				ST7735_OutUDec(timercount);
 			}
 			
 					
@@ -609,7 +611,7 @@ void game(){
 			}
 			delay50ms(2);
 			score = 0;
-			time = 0;
+			timercount = 0;
 			doodler.life = alive;
 			ST7735_FillScreen(0xFFFF);
 			Init();
