@@ -69,7 +69,6 @@ int fireState;
 int nolongerstart = 0;
 int score = 0; //global score displayed at top left corner of screen
 uint32_t Data;
-uint32_t timercount = 0;
 volatile uint32_t flag;
 volatile uint32_t slideflag;
 void delay5ms(uint32_t count);
@@ -211,7 +210,6 @@ void Death() {
 }
 
 void clock(){
-  timercount++;
 	score++;
 }
 
@@ -223,7 +221,7 @@ int main(void){
   ADC_Init(); 
 	ST7735_InitR(INITR_REDTAB);
 	Timer0_Init(Death,800000);
-  Timer1_Init(clock,16000000); // 1 Hz
+ 
 	
 	Sound_Init();
 	SysTick_Init(4000000);
@@ -274,7 +272,6 @@ int main(void){
 //=======================================main loop====================================================
 void game(){
 	delay50ms(2);
-	timercount = 0;
 	EnableInterrupts();
 
 	int globalheight = 100;
@@ -493,20 +490,12 @@ void game(){
 				ST7735_OutString("Score: ");
 				ST7735_SetCursor(7, 0);					
 				ST7735_OutUDec(score);		
-				ST7735_SetCursor(0, 1);					
-				ST7735_OutString("Time: ");				
-				ST7735_SetCursor(6, 1);					
-				ST7735_OutUDec(timercount);
 			}
 			else if(language == 1){
 				ST7735_SetCursor(0, 0);					
 				ST7735_OutString("Puntaje: ");
 				ST7735_SetCursor(8, 0);					
 				ST7735_OutUDec(score);		
-				ST7735_SetCursor(0, 1);					
-				ST7735_OutString("Tiempo: ");				
-				ST7735_SetCursor(7, 1);					
-				ST7735_OutUDec(timercount);
 			}
 			
 					
@@ -611,7 +600,6 @@ void game(){
 			}
 			delay50ms(2);
 			score = 0;
-			timercount = 0;
 			doodler.life = alive;
 			ST7735_FillScreen(0xFFFF);
 			Init();
