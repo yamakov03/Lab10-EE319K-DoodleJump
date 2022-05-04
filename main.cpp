@@ -112,12 +112,12 @@ void Init(void){
 	//make sure that there are reachable platforms
 	int badcount = 0;
 	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
-		if(greenplatform[i].y < 60){
+		if(greenplatform[i].y < 80){
 			badcount++;
 		}
 	}
 	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
-		if(blueplatform[i].y < 60){
+		if(blueplatform[i].y < 80){
 			badcount++;
 		}
 	}
@@ -132,11 +132,11 @@ void Init(void){
 		}
 	}
 	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
-		if(blueplatform[i].y < 120){
+		if(blueplatform[i].y > 120){
 			badcount++;
 		}
 	}
-	if(badcount > 4){
+	if(badcount < 3){
 		Init();
 	}
 	
@@ -156,7 +156,7 @@ void Init(void){
 	blueenemy.image = blue_enemy_sprite;
 	blueenemy.w = 22;
 	blueenemy.h = 13;
-	blueenemy.vx = 0; 
+	blueenemy.vx = 2; 
 	blueenemy.vy = 0; 
 }
 
@@ -466,6 +466,13 @@ void game(){
 		
 			ST7735_DrawBitmap(blueenemy.oldx, blueenemy.oldy, blueclear, blueenemy.w, blueenemy.h);
 			if(blueenemy.life == alive){
+				blueenemy.x += blueenemy.vx;
+				if(blueenemy.x == 100){
+					blueenemy.vx *= -1;
+				}
+				if(blueenemy.x == 0){
+					blueenemy.vx *= -1;
+				}
 				ST7735_DrawBitmap(blueenemy.x, blueenemy.y, blueenemy.image, blueenemy.w, blueenemy.h);
 					blueenemy.oldy = blueenemy.y;
 					blueenemy.oldx = blueenemy.x;
