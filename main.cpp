@@ -209,10 +209,6 @@ void Death() {
 	}
 }
 
-void clock(){
-	score++;
-}
-
 int main(void){
 	DisableInterrupts();
   PLL_Init(Bus80MHz);       // Bus clock is 80 MHz 
@@ -370,13 +366,11 @@ void game(){
 			if(((peashot.x + 5> redenemy.x) && (peashot.x + 5< redenemy.x + redenemy.w)) && peashot.y < redenemy.y){
 				peashot.life = dead;
 				redenemy.life = dead;
-				score ++;
 			}
 
 			if(((peashot.x + 5> blueenemy.x) && (peashot.x + 5 < blueenemy.x + blueenemy.w)) && peashot.y < blueenemy.y){
 				peashot.life = dead;
 				blueenemy.life = dead;
-				score ++;
 			}
 
 				
