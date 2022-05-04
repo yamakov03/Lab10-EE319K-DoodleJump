@@ -55,7 +55,7 @@ struct platform{
   status_t life;         // dead/alive
 }; typedef struct platform platform;
 
-#define MAXGREENPLATFORMS 6
+#define MAXGREENPLATFORMS 7
 #define MAXBLUEPLATFORMS 2
 
 sprite_t doodler;
@@ -111,32 +111,35 @@ void Init(void){
 	
 	//make sure that there are reachable platforms
 	int badcount = 0;
+	int rlybadcount = 0;
 	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
-		if(greenplatform[i].y < 80){
+		if(greenplatform[i].y < 50){
 			badcount++;
 		}
 	}
 	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
-		if(blueplatform[i].y < 80){
+		if(blueplatform[i].y < 50){
 			badcount++;
 		}
 	}
-	if(badcount > 4){
-		Init();
-	}
-	badcount = 0;
+//	if(badcount > 4){
+//		Init();
+//	}
+	//badcount = 0;
 	
 	for(int i = 0; i < MAXGREENPLATFORMS; i++) {
-		if(greenplatform[i].y > 120){
+		if(greenplatform[i].y > 130){
 			badcount++;
+			rlybadcount++;
 		}
 	}
 	for(int i = 0; i < MAXBLUEPLATFORMS; i++) {
-		if(blueplatform[i].y > 120){
+		if(blueplatform[i].y > 130){
 			badcount++;
+			rlybadcount++;
 		}
 	}
-	if(badcount < 3){
+	if(badcount > 5 || rlybadcount < 2){
 		Init();
 	}
 	
